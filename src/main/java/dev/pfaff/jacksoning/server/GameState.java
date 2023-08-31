@@ -6,7 +6,6 @@ import dev.pfaff.jacksoning.Winner;
 import dev.pfaff.jacksoning.items.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.GameMode;
 
 import static dev.pfaff.jacksoning.Config.GROOVE_INTERVAL;
@@ -86,8 +85,8 @@ public final class GameState {
 		}
 	}
 
-	public long timeUntilNextGroove() {
-		return GROOVE_INTERVAL - (time() % GROOVE_INTERVAL);
+	public int timeUntilNextGroove() {
+		return GROOVE_INTERVAL - (int)(time() % GROOVE_INTERVAL);
 	}
 
 	/*
@@ -121,9 +120,11 @@ public final class GameState {
 		}
 		inner.time(0);
 		assert isRunning();
+		server.getOverworld().setTimeOfDay(8000);
 		for (var p : IGame.cast(server).players()) {
 			// TODO: https://git.pfaff.dev/michael/jacksoning/issues/8
-			respawnPlayer(server, p, false);
+			IGamePlayer.cast(p).respawnPlayer(false);
+			IGamePlayer.cast(p).giveKit();
 		}
 
 		//var spawnPos255 = server.getOverworld().getSpawnPos().withY(255);
@@ -162,7 +163,9 @@ public final class GameState {
 				server.getPlayerManager().getPlayerList().forEach(p -> {
 					var role = IGamePlayer.cast(p).state().role();
 					if (role == PlayerRole.Jackson || role == PlayerRole.Mistress) {
-						p.giveItemStack(new ItemStack(Items.GROOVE, economy() * giftGroove));
+						if (IGamePlayer.cast(p).state().isSpawned()) {
+							p.giveItemStack(new ItemStack(Items.GROOVE, economy() * giftGroove));
+						}
 					}
 				});
 
@@ -170,16 +173,6 @@ public final class GameState {
 			}
 			inner.time(time + 1);
 		}
-	}
-
-	public void respawnPlayer(MinecraftServer server, ServerPlayerEntity player, boolean cooldown) {
-		// TODO: https://git.pfaff.dev/michael/jacksoning/issues/4
-		player.setOnFire(false);
-		player.clearStatusEffects();
-		player.setHealth(player.getMaxHealth());
-		IGamePlayer.cast(player).state().applyGameMode(player);
-		var spawnPos = server.getOverworld().getSpawnPos();
-		player.teleport(server.getOverworld(), spawnPos.getX(), spawnPos.getY(), spawnPos.getZ(), 0f, 0f);
 	}
 
 	public void gameOver(MinecraftServer server, Winner winner) {
@@ -190,6 +183,12 @@ public final class GameState {
 			}, true);
 		});
 		this.stop(server);
-		server.getPlayerManager().getPlayerList().forEach(p -> IGamePlayer.cast(p).setRole(PlayerRole.None));
+		server.getPlayerManager().getPlayerList().forEach(p -> {
+			var gp = IGamePlayer.cast(p);
+			switch (gp.state().role()) {
+				case Mistress -> gp.setRole(PlayerRole.UNLeader);
+				default -> {}
+			}
+		});
 	}
 }

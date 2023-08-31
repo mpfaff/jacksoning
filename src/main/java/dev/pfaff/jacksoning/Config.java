@@ -9,13 +9,22 @@ public final class Config {
 
 	public static int JACKSON_ZONE_RADIUS = 50;
 
-	public static boolean ALLOW_INCOMPLETE_CAST = true;
+	/**
+	 * Reduces cooldowns, ignores some checks.
+	 */
+	public static boolean DEV_MODE = true;
+
+	public static boolean ALLOW_INCOMPLETE_CAST = DEV_MODE;
 
 	/**
 	 * Every 4 minutes:
 	 * 20 ticks per second, 60 per minute, 4 per interval
 	 */
-	public static final long GROOVE_INTERVAL = 20 * 60 * 4;
+	public static final int GROOVE_INTERVAL = 20 * 60 * 4;
+
+	public static final int RESPAWN_COOLDOWN = DEV_MODE ? 20 * 5 : 20 * 30 * 5;
+
+	public static int JACKSON_BASE_HEALTH_BOOST = 20 * 3;
 
 	public static void throwIncompleteCastError(MinecraftServer server, String message) {
 		if (ALLOW_INCOMPLETE_CAST) {

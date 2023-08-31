@@ -2,28 +2,29 @@ package dev.pfaff.jacksoning.server;
 
 import dev.pfaff.jacksoning.PlayerRole;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 
+import static dev.pfaff.jacksoning.util.nbt.NbtData.NBT_COMPOUND;
+import static dev.pfaff.jacksoning.util.nbt.NbtData.NBT_INT;
+import static dev.pfaff.jacksoning.util.nbt.NbtData.NBT_STRING;
+
 public abstract sealed class PlayerState {
 	private static final String PLAYER_NBT_KEY = "jacksoning_state";
 	private static final String NBT_ROLE = "role";
+	private static final String NBT_RESPAWN_TIME = "respawn_time";
+
+	public static final int RESPAWN_TIME_SPAWNED = -1;
 
 	public abstract PlayerRole role();
 
 	public abstract GameMode gameMode();
 
-	public void tick(ServerPlayerEntity player) {
-		this.applyGameMode(player);
-	}
+	public int respawnTime = RESPAWN_TIME_SPAWNED;
 
-	public final void applyGameMode(ServerPlayerEntity player) {
-		var gm = this.gameMode();
-		if (gm != player.interactionManager.getGameMode()) {
-			player.changeGameMode(gm);
-		}
+	public boolean isSpawned() {
+		return respawnTime == RESPAWN_TIME_SPAWNED;
 	}
 
 	public static final class None extends PlayerState {
@@ -89,10 +90,12 @@ public abstract sealed class PlayerState {
 	@MustBeInvokedByOverriders
 	public void writeNbt(NbtCompound nbt) {
 		nbt.putString(NBT_ROLE, this.role().id);
+		nbt.putInt(NBT_RESPAWN_TIME, respawnTime);
 	}
 
 	@MustBeInvokedByOverriders
 	public void readNbt(NbtCompound nbt) {
+		respawnTime = NBT_INT.fromElementOrElse(nbt.get(NBT_RESPAWN_TIME), () -> RESPAWN_TIME_SPAWNED);
 	}
 
 	public final void writeToPlayerNbt(NbtCompound nbt) {
@@ -102,9 +105,8 @@ public abstract sealed class PlayerState {
 	}
 
 	public static PlayerState readFromPlayerNbt(NbtCompound nbt) {
-		if (nbt.contains(PLAYER_NBT_KEY, NbtElement.COMPOUND_TYPE)) {
-			NbtCompound inner = nbt.getCompound(PLAYER_NBT_KEY);
-			var role = inner.contains(NBT_ROLE, NbtElement.STRING_TYPE) ? switch (inner.getString(NBT_ROLE)) {
+		if (NBT_COMPOUND.get(nbt, PLAYER_NBT_KEY) instanceof NbtCompound inner) {
+			var role = NBT_STRING.get(inner, NBT_ROLE) instanceof String roleStr ? switch (roleStr) {
 				case "none" -> PlayerRole.None;
 				case "un_leader" -> PlayerRole.UNLeader;
 				case "jackson" -> PlayerRole.Jackson;

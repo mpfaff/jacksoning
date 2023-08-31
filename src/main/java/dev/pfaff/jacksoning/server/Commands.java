@@ -53,6 +53,11 @@ public final class Commands {
 		}))).then(literal("reset").executes(catchingIllegalState(context -> {
 			IGame.cast(context.getSource().getServer()).state().reset(context.getSource().getServer());
 			return 0;
+		}))).then(literal("restart").executes(catchingIllegalState(context -> {
+			var state = IGame.cast(context.getSource().getServer()).state();
+			state.reset(context.getSource().getServer());
+			state.start(context.getSource().getServer());
+			return 0;
 		}))).then(literal("boostEconomy").then(argument("addit", IntegerArgumentType.integer(0)).executes(catchingIllegalState(context -> {
 			int addit = context.getArgument("addit", Integer.class);
 			IGame.cast(context.getSource().getServer()).state().boostEconomy(addit);

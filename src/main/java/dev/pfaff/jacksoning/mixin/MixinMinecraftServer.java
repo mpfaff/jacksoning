@@ -17,7 +17,7 @@ import java.util.function.BooleanSupplier;
 @Mixin(MinecraftServer.class)
 public abstract class MixinMinecraftServer implements IGame {
 	@Unique
-	public GameState state = new GameState();
+	public final GameState state = new GameState();
 
 	@Override
 	public final GameState state() {

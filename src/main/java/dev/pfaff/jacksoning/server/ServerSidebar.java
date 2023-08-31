@@ -1,5 +1,6 @@
 package dev.pfaff.jacksoning.server;
 
+import dev.pfaff.jacksoning.util.AndIntChangeNotifier;
 import dev.pfaff.jacksoning.util.ChangeNotifier;
 import dev.pfaff.jacksoning.PlayerRole;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -14,12 +15,12 @@ import static dev.pfaff.jacksoning.SidebarCommand.setLine;
 import static dev.pfaff.jacksoning.SidebarCommand.truncate;
 
 public final class ServerSidebar {
-	public final ChangeNotifier<PlayerRole> roleChangeNotifier = ChangeNotifier.identity();
-	public final ChangeNotifier<Integer> roleLineNumberChangeNotifier = ChangeNotifier.equality();
-	public final ChangeNotifier<GameLifecycle> gameLifecycleChangeNotifier = ChangeNotifier.identity();
-	public final ChangeNotifier<Integer> gameLifecycleLineNumberChangeNotifier = ChangeNotifier.equality();
+	public final AndIntChangeNotifier<PlayerRole> roleChangeNotifier = AndIntChangeNotifier.identity();
+	public final AndIntChangeNotifier<GameLifecycle> gameLifecycleChangeNotifier = AndIntChangeNotifier.identity();
 	public final ChangeNotifier<BlockPos> blockPosChangeNotifier = ChangeNotifier.equality();
-	public final ChangeNotifier<Integer> insideJacksonZoneLineNumberChangeNotifier = ChangeNotifier.equality();
+	// stupid long field names. I just need them to be unique per call-site.
+	public final AndIntChangeNotifier<Boolean> insideJacksonZoneChangeNotifier = AndIntChangeNotifier.equality();
+	public final AndIntChangeNotifier<Integer> economyChangeNotifier = AndIntChangeNotifier.equality();
 
 	private int previousLength = 0;
 
@@ -36,7 +37,7 @@ public final class ServerSidebar {
 		var gs = gp.game().state();
 		var gameLifecycle = gs.lifecycle();
 
-		if (gameLifecycleChangeNotifier.updateAndGet(gameLifecycle) || gameLifecycleLineNumberChangeNotifier.updateAndGet(i)) {
+		if (gameLifecycleChangeNotifier.updateAndGet(gameLifecycle, i)) {
 			setLine(i, switch (gameLifecycle) {
 				case NotStarted -> "Awaiting Jackson";
 				case Running -> "Rocking";
@@ -50,29 +51,39 @@ public final class ServerSidebar {
 				setLine(i++, "Time: " + gs.time()).writePacket(buf);
 			}
 
-			// TODO: only make copy when necessary.
-			var blockPos = new BlockPos(p.getBlockPos());
-			if (blockPosChangeNotifier.updateAndGet(blockPos) || insideJacksonZoneLineNumberChangeNotifier.updateAndGet(i)) {
-				var inside = gp.isInsideJacksonZone();
-				// TODO: only send when inside changes, not just when blockPos changes
-				setLine(i, inside ? "Inside Neverland Ranch" : "Outside Neverland Ranch").writePacket(buf);
-			}
-			i++;
-
-			switch (gp.state().role()) {
-				case Jackson, Mistress -> {
-					setLine(i++, "Groove drop in " + String.format("%.1f", gs.timeUntilNextGroove() / 20f) + "s").writePacket(buf);
+			if (gp.state().isSpawned()) {
+				// TODO: only make copy when necessary.
+				var blockPos = new BlockPos(p.getBlockPos());
+				if (blockPosChangeNotifier.updateAndGet(blockPos)) {
+					insideJacksonZoneChangeNotifier.updateA(gp.isInsideJacksonZone());
 				}
+				if (insideJacksonZoneChangeNotifier.updateBAndGet(i)) {
+					boolean inside = insideJacksonZoneChangeNotifier.inputA();
+					// TODO: only send when inside changes, not just when blockPos changes
+					setLine(i, inside ? "Inside Neverland Ranch" : "Outside Neverland Ranch").writePacket(buf);
+				}
+				i++;
+
+				switch (gp.state().role()) {
+					case Jackson, Mistress -> {
+						if (economyChangeNotifier.updateAndGet(gs.economy(), i)) {
+							setLine(i, "Economy: " + gs.economy()).writePacket(buf);
+						}
+						i++;
+
+						setLine(i++, "Groove drop in " + String.format("%.1f", gs.timeUntilNextGroove() / 20f) + "s").writePacket(buf);
+					}
+				}
+			} else {
+				setLine(i++, "Respawning in " + String.format("%.1f", gp.state().respawnTime / 20f) + "s").writePacket(buf);
 			}
 		}
 
-		if (roleChangeNotifier.get() || roleLineNumberChangeNotifier.updateAndGet(i)) {
+		if (roleChangeNotifier.updateBAndGet(i)) {
 			var role = gp.state().role();
-			setLine(i++, LABEL_ROLE.copy().append(Text.translatable(role.translationKey))).writePacket(buf);
-		} else {
-			// keep the line.
-			i++;
+			setLine(i, LABEL_ROLE.copy().append(Text.translatable(role.translationKey))).writePacket(buf);
 		}
+		i++;
 
 		// set the real line count
 		int writerIndex = buf.writerIndex();

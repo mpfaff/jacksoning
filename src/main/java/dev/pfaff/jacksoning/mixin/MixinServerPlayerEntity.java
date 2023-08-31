@@ -39,16 +39,16 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 
 	@Override
 	public final void setState(PlayerState state) {
-		sidebar.roleChangeNotifier.update(state.role());
+		// TODO: would be better to use event listeners and have listeners on various properties and set update the
+		//  change notifiers in there...
+		sidebar.roleChangeNotifier.updateA(state.role());
 		this.state = state;
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
 	private final void tick(CallbackInfo ci) {
 		var p = (ServerPlayerEntity) (Object) this;
-		if (IGame.cast(server).state().isRunning()) {
-			state.tick(p);
-		}
+		tickJacksoning();
 		sidebar.tick(p);
 	}
 

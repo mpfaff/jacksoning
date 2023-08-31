@@ -4,6 +4,8 @@
   "package": "dev.pfaff.jacksoning.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "AccessorEntity",
+    "AccessorFireworkRocketEntity",
     "MixinMinecraftServer",
     "MixinPillagerEntity",
     "MixinServerPlayerEntity",
