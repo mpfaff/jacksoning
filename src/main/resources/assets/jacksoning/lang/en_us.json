@@ -1,0 +1,12 @@
+{
+  "block.jacksoning.self_destruct_button": "Self Destruct Button",
+  "enum.jacksoning.none": "None",
+  "enum.jacksoning.un_leader": "UN Leader",
+  "enum.jacksoning.jackson": "Jackson",
+  "enum.jacksoning.mistress": "Mistress",
+  "enum.jacksoning.referee": "Referee",
+  "item.jacksoning.groove": "Groove",
+  "label.jacksoning.role": "Role",
+  "message.jacksoning.game_over.jackson_won": "Game over: Jackson won",
+  "message.jacksoning.game_over.un_won": "Game over: the UN leaders won"
+}

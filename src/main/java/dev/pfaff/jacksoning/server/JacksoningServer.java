@@ -1,0 +1,29 @@
+package dev.pfaff.jacksoning.server;
+
+import com.mojang.logging.LogUtils;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.minecraft.server.network.ServerPlayerEntity;
+import org.slf4j.Logger;
+
+public class JacksoningServer implements ModInitializer {
+	public static final Logger LOGGER = LogUtils.getLogger();
+
+	@Override
+	public void onInitialize() {
+		ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
+			IGamePlayer.cast(newPlayer).setState(IGamePlayer.cast(oldPlayer).state());
+		});
+		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, damageSource, damageAmount) -> {
+			if (entity instanceof ServerPlayerEntity player) {
+				IGamePlayer.cast(player).onFatalDamage();
+				return false;
+			}
+			return true;
+		});
+		Commands.registerTypes();
+		CommandRegistrationCallback.EVENT.register(Commands::register);
+	}
+}

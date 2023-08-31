@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.pfaff.jacksoning.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "MixinMinecraftServer",
+    "MixinPillagerEntity",
+    "MixinServerPlayerEntity",
+    "MixinServerWorld"
+  ],
+  "client": [
+    "MixinChatScreen"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
