@@ -16,6 +16,6 @@ public abstract class MixinPillagerEntity extends IllagerEntity {
 
 	@Override
 	public boolean isTeammate(Entity other) {
-		return super.isTeammate(other) || (other instanceof IGamePlayer gp && gp.state().role() == PlayerRole.UNLeader);
+		return super.isTeammate(other) || (other instanceof IGamePlayer gp && gp.data().role() == PlayerRole.UNLeader);
 	}
 }

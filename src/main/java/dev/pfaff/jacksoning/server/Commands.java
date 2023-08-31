@@ -2,6 +2,7 @@ package dev.pfaff.jacksoning.server;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import dev.pfaff.jacksoning.PlayerRole;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
@@ -59,8 +60,12 @@ public final class Commands {
 			state.start(context.getSource().getServer());
 			return 0;
 		}))).then(literal("boostEconomy").then(argument("addit", IntegerArgumentType.integer(0)).executes(catchingIllegalState(context -> {
-			int addit = context.getArgument("addit", Integer.class);
+			int addit = IntegerArgumentType.getInteger(context, "addit");
 			IGame.cast(context.getSource().getServer()).state().boostEconomy(addit);
+			return 0;
+		})))).then(literal("devMode").then(argument("enable", BoolArgumentType.bool()).executes(catchingIllegalState(context -> {
+			boolean enable = BoolArgumentType.getBool(context, "enable");
+			IGame.cast(context.getSource().getServer()).state().devMode(enable);
 			return 0;
 		})))));
 		dispatcher.register(literal("setrole").requires(Commands::isReferee)
@@ -70,7 +75,8 @@ public final class Commands {
 												  var players = EntityArgumentType.getPlayers(context, "players");
 												  var role = context.getArgument("role", PlayerRole.class);
 												  for (var player : players) {
-													  IGamePlayer.cast(player).setRole(role);
+													  var gp = IGamePlayer.cast(player);
+													  gp.setInitRole(role);
 												  }
 												  return 0;
 											  }))));

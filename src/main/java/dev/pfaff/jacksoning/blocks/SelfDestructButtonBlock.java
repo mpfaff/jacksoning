@@ -23,7 +23,7 @@ import net.minecraft.world.explosion.ExplosionBehavior;
 import java.util.List;
 import java.util.Optional;
 
-import static dev.pfaff.jacksoning.Config.ECONOMY_BOOST_PER_OUTPUT;
+import static dev.pfaff.jacksoning.Config.economyBoostPerOutput;
 
 public final class SelfDestructButtonBlock extends StoneButtonBlock {
 	private static final BooleanProperty TRIGGERING = BooleanProperty.of("triggering");
@@ -74,7 +74,7 @@ public final class SelfDestructButtonBlock extends StoneButtonBlock {
 			world.spawnParticles(new DustParticleEffect(new Vec3f(92 / 255f, 0f, 0f), 4f), pos.getX(), pos.getY() + 0.5, pos.getZ(), 512, 4, 4, 4, 0.4);
 		} else if (state.get(TRIGGERING)) {
 			world.breakBlock(pos, false);
-			IGame.cast(world.getServer()).state().boostEconomy(ECONOMY_BOOST_PER_OUTPUT);
+			IGame.cast(world.getServer()).state().boostEconomy(economyBoostPerOutput());
 			for (int y = 1; y >= -3; y--) {
 				for (var offset : OFFSETS) {
 					var explosionPos = pos.add(offset.multiply(6)).add(0, y * 4, 0);

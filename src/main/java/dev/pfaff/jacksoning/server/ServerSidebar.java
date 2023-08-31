@@ -1,5 +1,6 @@
 package dev.pfaff.jacksoning.server;
 
+import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.util.AndIntChangeNotifier;
 import dev.pfaff.jacksoning.util.ChangeNotifier;
 import dev.pfaff.jacksoning.PlayerRole;
@@ -21,6 +22,7 @@ public final class ServerSidebar {
 	// stupid long field names. I just need them to be unique per call-site.
 	public final AndIntChangeNotifier<Boolean> insideJacksonZoneChangeNotifier = AndIntChangeNotifier.equality();
 	public final AndIntChangeNotifier<Integer> economyChangeNotifier = AndIntChangeNotifier.equality();
+	public final AndIntChangeNotifier<Integer> isDevModeChangeNotifier = AndIntChangeNotifier.equality();
 
 	private int previousLength = 0;
 
@@ -51,7 +53,7 @@ public final class ServerSidebar {
 				setLine(i++, "Time: " + gs.time()).writePacket(buf);
 			}
 
-			if (gp.state().isSpawned()) {
+			if (gp.data().isSpawned()) {
 				// TODO: only make copy when necessary.
 				var blockPos = new BlockPos(p.getBlockPos());
 				if (blockPosChangeNotifier.updateAndGet(blockPos)) {
@@ -64,7 +66,7 @@ public final class ServerSidebar {
 				}
 				i++;
 
-				switch (gp.state().role()) {
+				switch (gp.data().role()) {
 					case Jackson, Mistress -> {
 						if (economyChangeNotifier.updateAndGet(gs.economy(), i)) {
 							setLine(i, "Economy: " + gs.economy()).writePacket(buf);
@@ -75,15 +77,22 @@ public final class ServerSidebar {
 					}
 				}
 			} else {
-				setLine(i++, "Respawning in " + String.format("%.1f", gp.state().respawnTime / 20f) + "s").writePacket(buf);
+				setLine(i++, "Respawning in " + String.format("%.1f", gp.data().respawnTime / 20f) + "s").writePacket(buf);
 			}
 		}
 
 		if (roleChangeNotifier.updateBAndGet(i)) {
-			var role = gp.state().role();
+			var role = gp.data().role();
 			setLine(i, LABEL_ROLE.copy().append(Text.translatable(role.translationKey))).writePacket(buf);
 		}
 		i++;
+
+		if (Config.devMode()) {
+			if (isDevModeChangeNotifier.updateBAndGet(i)) {
+				setLine(i, "Dev mode").writePacket(buf);
+			}
+			i++;
+		}
 
 		// set the real line count
 		int writerIndex = buf.writerIndex();

@@ -8,7 +8,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.GameMode;
 
-import static dev.pfaff.jacksoning.Config.GROOVE_INTERVAL;
+import static dev.pfaff.jacksoning.Config.grooveInterval;
+import static dev.pfaff.jacksoning.Config.jacksonSpawnDelay;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_JACKSON_WON;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_UN_WON;
 
@@ -67,6 +68,14 @@ public final class GameState {
 		inner.economy(inner.economy() + addit);
 	}
 
+	public boolean devMode() {
+		return Config.devMode();
+	}
+
+	public void devMode(boolean enable) {
+		inner.devMode(enable);
+	}
+
 	/**
 	 * Whether the game has ended.
 	 */
@@ -86,7 +95,7 @@ public final class GameState {
 	}
 
 	public int timeUntilNextGroove() {
-		return GROOVE_INTERVAL - (int)(time() % GROOVE_INTERVAL);
+		return grooveInterval() - (int) (time() % grooveInterval());
 	}
 
 	/*
@@ -98,7 +107,12 @@ public final class GameState {
 		int jacksonCount = 0;
 		int unLeaderCount = 0;
 		for (var p : IGame.cast(server).players()) {
-			switch (IGamePlayer.cast(p).state().role()) {
+			var gp = IGamePlayer.cast(p);
+
+			// reset the role state for the new game
+			gp.setRole(gp.data().role());
+
+			switch (gp.data().role()) {
 				case None -> {
 				}
 				case UNLeader -> unLeaderCount++;
@@ -123,8 +137,9 @@ public final class GameState {
 		server.getOverworld().setTimeOfDay(8000);
 		for (var p : IGame.cast(server).players()) {
 			// TODO: https://git.pfaff.dev/michael/jacksoning/issues/8
-			IGamePlayer.cast(p).respawnPlayer(false);
-			IGamePlayer.cast(p).giveKit();
+			var gp = IGamePlayer.cast(p);
+			gp.respawnPlayer(gp.data().role() == PlayerRole.Jackson ? jacksonSpawnDelay() : 0);
+			gp.giveKit();
 		}
 
 		//var spawnPos255 = server.getOverworld().getSpawnPos().withY(255);
@@ -140,7 +155,10 @@ public final class GameState {
 		if (!isRunning()) throw new IllegalStateException("Game is not running");
 		inner.time(TIME_ENDED);
 		assert isEnded();
-		server.getPlayerManager().getPlayerList().forEach(p -> p.changeGameMode(GameMode.SPECTATOR));
+		server.getPlayerManager().getPlayerList().forEach(p -> {
+			p.getInventory().clear();
+			p.changeGameMode(GameMode.SPECTATOR);
+		});
 	}
 
 	public void reset(MinecraftServer server) {
@@ -156,14 +174,14 @@ public final class GameState {
 			// the number of groove gifts that should have been given by now
 			// hopefully no one is able to cause ticks to skip while still increasing Jackson's economy
 			// I'd rather give them extra groove than skip it entirely
-			int targetGrooveGifts = (int) (time / GROOVE_INTERVAL);
+			int targetGrooveGifts = (int) (time / grooveInterval());
 			if (targetGrooveGifts != grooveGifts()) {
 				int giftGroove = targetGrooveGifts - grooveGifts();
 
 				server.getPlayerManager().getPlayerList().forEach(p -> {
-					var role = IGamePlayer.cast(p).state().role();
+					var role = IGamePlayer.cast(p).data().role();
 					if (role == PlayerRole.Jackson || role == PlayerRole.Mistress) {
-						if (IGamePlayer.cast(p).state().isSpawned()) {
+						if (IGamePlayer.cast(p).data().isSpawned()) {
 							p.giveItemStack(new ItemStack(Items.GROOVE, economy() * giftGroove));
 						}
 					}
@@ -185,9 +203,10 @@ public final class GameState {
 		this.stop(server);
 		server.getPlayerManager().getPlayerList().forEach(p -> {
 			var gp = IGamePlayer.cast(p);
-			switch (gp.state().role()) {
+			switch (gp.data().role()) {
 				case Mistress -> gp.setRole(PlayerRole.UNLeader);
-				default -> {}
+				default -> {
+				}
 			}
 		});
 	}

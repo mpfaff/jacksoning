@@ -14,7 +14,7 @@ public class JacksoningServer implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
-			IGamePlayer.cast(newPlayer).setState(IGamePlayer.cast(oldPlayer).state());
+			IGamePlayer.cast(newPlayer).roleState(IGamePlayer.cast(oldPlayer).roleState());
 		});
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, damageSource, damageAmount) -> {
 			if (entity instanceof ServerPlayerEntity player) {

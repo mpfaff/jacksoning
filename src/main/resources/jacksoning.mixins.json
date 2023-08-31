@@ -6,6 +6,7 @@
   "mixins": [
     "AccessorEntity",
     "AccessorFireworkRocketEntity",
+    "MixinIntegratedServer",
     "MixinMinecraftServer",
     "MixinPillagerEntity",
     "MixinServerPlayerEntity",

@@ -1,15 +1,32 @@
 package dev.pfaff.jacksoning.server;
 
+import dev.pfaff.jacksoning.Config;
+import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.PersistentState;
 
+import java.lang.invoke.MethodHandles;
+import java.util.List;
+
 import static dev.pfaff.jacksoning.server.GameState.TIME_NOT_STARTED;
+import static dev.pfaff.jacksoning.util.nbt.Codec.NBT_BOOL;
+import static dev.pfaff.jacksoning.util.nbt.Codec.NBT_INT;
+import static dev.pfaff.jacksoning.util.nbt.Codec.NBT_LONG;
+import static dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper.containerField;
 
 public final class GameStateInner extends PersistentState {
-	private static final String NBT_TIME = "time";
-	private static final String NBT_GROOVE_GIFTS = "grooveGifts";
-	private static final String NBT_ECONOMY = "economy";
-	//private static final String NBT_ZONE_BEACONS = "zoneBeacons";
+	private static final long INIT_TIME = TIME_NOT_STARTED;
+	private static final int INIT_GROOVE_GIFTS = 0;
+	private static final int INIT_ECONOMY = 1;
+	//private static final List<BlockPos> INIT_ZONE_BEACONS = List.of();
+
+	private static final ContainerCodecHelper<GameStateInner> CODEC = ContainerCodecHelper.by(List.of(
+		ContainerCodecHelper.containerField(MethodHandles.lookup(), "time", NBT_LONG, "time", () -> INIT_TIME),
+		ContainerCodecHelper.containerField(MethodHandles.lookup(), "grooveGifts", NBT_INT, "grooveGifts", () -> INIT_GROOVE_GIFTS),
+		ContainerCodecHelper.containerField(MethodHandles.lookup(), "economy", NBT_INT, "economy", () -> INIT_ECONOMY),
+		//ContainerCodec.containerField(MethodHandles.lookup(), "zoneBeacons", NBT_FLAT_BLOCK_POS_LIST, "zone_beacons", () -> INIT_ZONE_BEACONS),
+		containerField(__ -> Config.devMode(), (__, b) -> Config.devMode(b), NBT_BOOL, "dev_mode", () -> false)
+	));
 
 	private long time;
 	private int grooveGifts;
@@ -17,36 +34,19 @@ public final class GameStateInner extends PersistentState {
 	//private List<BlockPos> zoneBeacons = List.of();
 
 	public void init() {
-		time(TIME_NOT_STARTED);
-		grooveGifts(0);
-		economy(1);
+		time(INIT_TIME);
+		grooveGifts(INIT_GROOVE_GIFTS);
+		economy(INIT_ECONOMY);
 	}
 
 	@Override
 	public NbtCompound writeNbt(NbtCompound nbt) {
-		nbt.putLong(NBT_TIME, time);
-		nbt.putInt(NBT_GROOVE_GIFTS, grooveGifts);
-		nbt.putInt(NBT_ECONOMY, economy);
-		//var flatZoneBeacons = new int[zoneBeacons.size() * 3];
-		//for (int i = 0; i < zoneBeacons.size(); i++) {
-		//	flatZoneBeacons[i * 3] = zoneBeacons.get(i).getX();
-		//	flatZoneBeacons[i * 3 + 1] = zoneBeacons.get(i).getY();
-		//	flatZoneBeacons[i * 3 + 2] = zoneBeacons.get(i).getZ();
-		//}
-		//nbt.putIntArray(NBT_ZONE_BEACONS, flatZoneBeacons);
+		CODEC.write(this, nbt);
 		return nbt;
 	}
 
 	public void readNbt(NbtCompound nbt) {
-		time = nbt.getLong(NBT_TIME);
-		grooveGifts = nbt.getInt(NBT_GROOVE_GIFTS);
-		economy = nbt.getInt(NBT_ECONOMY);
-		//var flatZoneBeacons = nbt.getIntArray(NBT_ZONE_BEACONS);
-		//var zoneBeacons = new BlockPos[flatZoneBeacons.length / 3];
-		//for (int i = 0; i < zoneBeacons.length; i++) {
-		//	zoneBeacons[i] = new BlockPos(flatZoneBeacons[i * 3], flatZoneBeacons[i * 3 + 1], flatZoneBeacons[i * 3 + 2]);
-		//}
-		//this.zoneBeacons = List.of(zoneBeacons);
+		CODEC.read(nbt, this);
 		setDirty(false);
 	}
 
@@ -80,6 +80,13 @@ public final class GameStateInner extends PersistentState {
 		if (economy != this.economy) {
 			markDirty();
 			this.economy = economy;
+		}
+	}
+
+	public void devMode(boolean enable) {
+		if (enable != Config.devMode()) {
+			markDirty();
+			Config.devMode(enable);
 		}
 	}
 

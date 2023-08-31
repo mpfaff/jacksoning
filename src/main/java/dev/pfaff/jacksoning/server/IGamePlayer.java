@@ -20,38 +20,55 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameMode;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 import java.util.UUID;
 
-import static dev.pfaff.jacksoning.Config.JACKSON_BASE_HEALTH_BOOST;
-import static dev.pfaff.jacksoning.Config.JACKSON_ZONE_RADIUS;
-import static dev.pfaff.jacksoning.Config.RESPAWN_COOLDOWN;
+import static dev.pfaff.jacksoning.Config.jacksonBaseHealthBoost;
+import static dev.pfaff.jacksoning.Config.jacksonZoneRadius;
+import static dev.pfaff.jacksoning.Config.respawnCooldown;
 import static dev.pfaff.jacksoning.Constants.ITEM_COBBLE_TURRET;
 import static dev.pfaff.jacksoning.Constants.MODIFIED_ATTRIBUTES;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_ATTACK_DAMAGE_ADDIT;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_GROUP;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_MAX_HEALTH_ADDIT;
-import static dev.pfaff.jacksoning.server.PlayerState.RESPAWN_TIME_SPAWNED;
+import static dev.pfaff.jacksoning.server.PlayerData.RESPAWN_TIME_SPAWNED;
 
 public interface IGamePlayer {
 	public static IGamePlayer cast(ServerPlayerEntity player) {
 		return (IGamePlayer) player;
 	}
 
-	public PlayerState state();
+	public PlayerData data();
 
-	public void setState(PlayerState state);
+	public void data(PlayerData data);
+
+	public ServerSidebar sidebar();
+
+	public default RoleState roleState() {
+		return data().roleState;
+	}
+
+	public default void roleState(RoleState state) {
+		// TODO: would be better to use event listeners and have listeners on various properties and set update the
+		//  change notifiers in there...
+		data().roleState = state;
+		sidebar().roleChangeNotifier.updateA(state.role());
+	}
 
 	public default void setRole(PlayerRole role) {
 		JacksoningServer.LOGGER.info("Setting role of " + this + " to " + role);
-		setState(role.newState());
+		roleState(role.newState());
+	}
+
+	public default void setInitRole(PlayerRole role) {
+		JacksoningServer.LOGGER.info("Setting init role of " + this + " to " + role);
+		data().initRole = role;
+		setRole(role);
 	}
 
 	public default ServerPlayerEntity asMc() {
@@ -67,12 +84,12 @@ public interface IGamePlayer {
 	}
 
 	public default boolean isReferee() {
-		return this.state().role() == PlayerRole.Referee || ((ServerPlayerEntity) this).hasPermissionLevel(2);
+		return this.data().role() == PlayerRole.Referee || ((ServerPlayerEntity) this).hasPermissionLevel(2);
 	}
 
 	public default boolean isInsideJacksonZone() {
 		var spawnPos = server().getOverworld().getSpawnPos();
-		return VecUtil.all(asMc().getBlockPos().subtract(spawnPos), dist -> Math.abs(dist) < JACKSON_ZONE_RADIUS);
+		return VecUtil.all(asMc().getBlockPos().subtract(spawnPos), dist -> Math.abs(dist) < jacksonZoneRadius());
 	}
 
 	default void applyModifier(HashSet<UUID> keep,
@@ -104,15 +121,15 @@ public interface IGamePlayer {
 		}
 		if (game().state().isRunning()) {
 			// TODO: https://git.pfaff.dev/michael/jacksoning/issues/5
-			applyGameMode(state().isSpawned() ? state().gameMode() : GameMode.SPECTATOR);
-			if (state().isSpawned()) {
+			applyGameMode(data().isSpawned() ? data().role().gameMode : GameMode.SPECTATOR);
+			if (data().isSpawned()) {
 				var keep = new HashSet<UUID>();
-				switch (state().role()) {
+				switch (data().role()) {
 					case Jackson -> {
 						applyModifier(keep,
 									  EntityAttributes.GENERIC_MAX_HEALTH,
 									  MODIFIER_MAX_HEALTH_ADDIT,
-									  JACKSON_BASE_HEALTH_BOOST,
+									  jacksonBaseHealthBoost(),
 									  EntityAttributeModifier.Operation.ADDITION);
 					}
 					case UNLeader -> {
@@ -134,12 +151,21 @@ public interface IGamePlayer {
 					}
 				}
 			} else {
-				if (--state().respawnTime == RESPAWN_TIME_SPAWNED) {
-					respawnPlayer(false);
+				if (--data().respawnTime == RESPAWN_TIME_SPAWNED) {
+					respawnPlayer(0);
+					if (data().roleState instanceof RoleState.Jackson state) {
+						if (!state.spawned) {
+							state.spawned = true;
+							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 20 * 20));
+							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 20 * 20));
+							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 20 * 20));
+							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 20 * 20, 3));
+						}
+					}
 				}
 			}
 		} else {
-			state().respawnTime = 0;
+			data().respawnTime = 0;
 		}
 	}
 
@@ -153,7 +179,7 @@ public interface IGamePlayer {
 		var g = game();
 
 		if (g.state().isRunning()) {
-			switch (state().role()) {
+			switch (data().role()) {
 				case Jackson -> {
 					if (isInsideJacksonZone()) {
 						for (int i = 0; i < 20; i++) {
@@ -184,6 +210,7 @@ public interface IGamePlayer {
 						g.state().gameOver(server(), Winner.Jackson);
 					} else {
 						setRole(PlayerRole.Mistress);
+						asMc().getInventory().dropAll();
 						giveKit();
 					}
 				}
@@ -192,7 +219,7 @@ public interface IGamePlayer {
 			}
 		}
 
-		respawnPlayer(true);
+		respawnPlayer(respawnCooldown());
 	}
 
 	public default void tpSpawn() {
@@ -200,11 +227,8 @@ public interface IGamePlayer {
 		asMc().teleport(server().getOverworld(), spawnPos.getX(), spawnPos.getY(), spawnPos.getZ(), 0f, 0f);
 	}
 
-	public default void respawnPlayer(boolean cooldown) {
-		if (cooldown) {
-			JacksoningServer.LOGGER.info("respawning with cooldown");
-			state().respawnTime = RESPAWN_COOLDOWN;
-		}
+	public default void respawnPlayer(int delay) {
+		data().respawnTime = delay == 0 ? -1 : delay;
 		asMc().clearStatusEffects();
 		asMc().setOnFire(false);
 		asMc().getHungerManager().setFoodLevel(20);
@@ -228,7 +252,7 @@ public interface IGamePlayer {
 	public default void giveKit() {
 		var inv = asMc().getInventory();
 		inv.clear();
-		switch (state().role()) {
+		switch (data().role()) {
 			case UNLeader -> {
 				inv.armor.set(3, new ItemStack(Items.LEATHER_HELMET));
 				inv.armor.set(2, new ItemStack(Items.LEATHER_CHESTPLATE));
