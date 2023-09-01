@@ -45,8 +45,6 @@ public interface IGamePlayer {
 
 	public PlayerData data();
 
-	public void data(PlayerData data);
-
 	public ServerSidebar sidebar();
 
 	public default RoleState roleState() {

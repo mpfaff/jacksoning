@@ -4,7 +4,9 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.server.shop.Shop;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -42,6 +44,22 @@ public final class Commands {
 		};
 	}
 
+	private static void sendShop(CommandContext<ServerCommandSource> context, Shop shop) {
+		var src = context.getSource();
+		src.sendMessage(Text.literal("Shop:"));
+		shop.levels().forEach(entry -> {
+			var item = entry.getKey();
+			var lvl = entry.getIntValue();
+			var msg = item.id() + "[level=" + lvl + "] ";
+			if (item.isUpgrade() && lvl >= item.maxLevel()) {
+				msg += "Sold out";
+			} else {
+				msg += item.name(lvl+1) + ": " + item.cost(lvl+1) + " groove";
+			}
+			src.sendMessage(Text.literal(msg));
+		});
+	}
+
 	public static void register(CommandDispatcher<ServerCommandSource> dispatcher,
 								CommandRegistryAccess registryAccess,
 								CommandManager.RegistrationEnvironment environment) {
@@ -66,6 +84,21 @@ public final class Commands {
 		})))).then(literal("devMode").then(argument("enable", BoolArgumentType.bool()).executes(catchingIllegalState(context -> {
 			boolean enable = BoolArgumentType.getBool(context, "enable");
 			IGame.cast(context.getSource().getServer()).state().devMode(enable);
+			return 0;
+		})))).then(literal("shop").requires(ServerCommandSource::isExecutedByPlayer).then(literal("list").executes(catchingIllegalState(context -> {
+			var gp = IGamePlayer.cast(context.getSource().getPlayer());
+			var shop = switch (gp.roleState()) {
+				case RoleState.None ignored -> null;
+				case RoleState.UNLeader ignored -> null;
+				case RoleState.Referee ignored -> null;
+				case RoleState.Jackson jackson -> jackson.shop;
+				case RoleState.Mistress mistress -> mistress.shop;
+			};
+			if (shop == null) {
+				context.getSource().sendError(Text.of("You cannot access the shop"));
+				return 1;
+			}
+			sendShop(context, shop);
 			return 0;
 		})))));
 		dispatcher.register(literal("setrole").requires(Commands::isReferee)

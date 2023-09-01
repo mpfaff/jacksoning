@@ -3,6 +3,8 @@ package dev.pfaff.jacksoning.mixin;
 import dev.pfaff.jacksoning.server.IGamePlayer;
 import dev.pfaff.jacksoning.server.PlayerData;
 import dev.pfaff.jacksoning.server.ServerSidebar;
+import dev.pfaff.jacksoning.util.nbt.CodecException;
+import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -16,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static dev.pfaff.jacksoning.server.PlayerData.PLAYER_NBT_KEY;
-import static dev.pfaff.jacksoning.util.nbt.Codec.NBT_COMPOUND;
+import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_COMPOUND;
 
 @Mixin(ServerPlayerEntity.class)
 public abstract class MixinServerPlayerEntity implements IGamePlayer {
@@ -29,7 +31,7 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 	private static Logger LOGGER;
 
 	@Unique
-	public PlayerData playerData = new PlayerData();
+	public final PlayerData playerData = new PlayerData();
 
 	@Unique
 	public ServerSidebar sidebar = new ServerSidebar();
@@ -37,13 +39,6 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 	@Override
 	public final PlayerData data() {
 		return playerData;
-	}
-
-	@Override
-	public void data(PlayerData data) {
-		playerData = data;
-		// trigger change notifiers
-		roleState(data.roleState);
 	}
 
 	@Override
@@ -60,13 +55,21 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 
 	@Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
 	private final void readCustomDataFromNbt(NbtCompound nbt, CallbackInfo ci) {
-		if (NBT_COMPOUND.getOrNull(nbt, PLAYER_NBT_KEY) instanceof NbtCompound inner) {
-			playerData.readNbt(inner);
+		var nbtWrapper = NbtElement.of(nbt);
+		try {
+			if (nbtWrapper.getAs(PLAYER_NBT_KEY, NBT_COMPOUND.or(null)) instanceof dev.pfaff.jacksoning.util.nbt.NbtCompound inner) {
+				playerData.readNbt(inner);
+				// trigger change notifiers
+				roleState(playerData.roleState);
+			}
+		} catch (CodecException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
 	@Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
 	private final void writeCustomDataFromNbt(NbtCompound nbt, CallbackInfo ci) {
-		NBT_COMPOUND.put(nbt, PLAYER_NBT_KEY, data().writeNbt());
+		var nbtWrapper = NbtElement.of(nbt);
+		nbtWrapper.put(PLAYER_NBT_KEY, data().writeNbt());
 	}
 }

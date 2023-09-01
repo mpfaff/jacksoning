@@ -2,6 +2,10 @@ package dev.pfaff.jacksoning;
 
 import dev.pfaff.jacksoning.server.IGamePlayer;
 import dev.pfaff.jacksoning.server.RoleState;
+import dev.pfaff.jacksoning.util.nbt.Codec;
+import dev.pfaff.jacksoning.util.nbt.Codecs;
+import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
+import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.command.argument.EnumArgumentType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.StringIdentifiable;
@@ -21,13 +25,20 @@ public enum PlayerRole implements StringIdentifiable {
 
 	public static final PlayerRole DEFAULT = None;
 
+	public static final dev.pfaff.jacksoning.util.nbt.Codec<PlayerRole, String> STRING_CODEC = Codecs.enumAsString(
+		PlayerRole.class,
+		PlayerRole::asString);
+	public static final dev.pfaff.jacksoning.util.nbt.Codec<PlayerRole, NbtElement> NBT_CODEC = NbtCodecs.NBT_STRING.then(
+		STRING_CODEC);
+
 	public final String id;
 	public final String translationKey;
 	public final GameMode gameMode;
 	private final MethodHandle stateConstructor;
 
-	public static final com.mojang.serialization.Codec<PlayerRole> CODEC = StringIdentifiable.createCodec(PlayerRole::values);
-	public static final EnumArgumentType<PlayerRole> ARGUMENT_TYPE = new EnumArgumentType<>(CODEC,
+	public static final com.mojang.serialization.Codec<PlayerRole> MOJANG_CODEC = StringIdentifiable.createCodec(
+		PlayerRole::values);
+	public static final EnumArgumentType<PlayerRole> ARGUMENT_TYPE = new EnumArgumentType<>(MOJANG_CODEC,
 																							PlayerRole::values) {};
 
 	private PlayerRole(String id, GameMode gameMode) {
