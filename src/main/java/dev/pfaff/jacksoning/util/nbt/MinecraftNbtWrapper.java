@@ -1,5 +1,6 @@
 package dev.pfaff.jacksoning.util.nbt;
 
+import dev.pfaff.jacksoning.util.codec.CodecException;
 import net.minecraft.nbt.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +13,8 @@ record MinecraftNbtWrapper(@NotNull net.minecraft.nbt.NbtElement nbt) implements
 	}
 
 	@Override
-	public byte type() {
-		return nbt.getType();
+	public NbtType type() {
+		return NbtType.VALUES.get(nbt.getType());
 	}
 
 	@Override

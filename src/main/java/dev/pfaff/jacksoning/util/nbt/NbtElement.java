@@ -1,5 +1,8 @@
 package dev.pfaff.jacksoning.util.nbt;
 
+import dev.pfaff.jacksoning.util.codec.Codec;
+import dev.pfaff.jacksoning.util.codec.CodecException;
+
 import java.util.List;
 
 /**
@@ -7,22 +10,20 @@ import java.util.List;
  * mutable views of binary NBT data.
  */
 public interface NbtElement {
-	static final List<String> TYPE_NAMES = List.of("END", // END_TYPE = 0
-												   "BYTE", // BYTE_TYPE = 1
-												   "SHORT", // SHORT_TYPE = 2
-												   "INT", // INT_TYPE = 3
-												   "LONG", // LONG_TYPE = 4
-												   "FLOAT", // FLOAT_TYPE = 5
-												   "DOUBLE", // DOUBLE_TYPE = 6
-												   "BYTE_ARRAY", // BYTE_ARRAY_TYPE = 7
-												   "STRING", // STRING_TYPE = 8
-												   "LIST", // LIST_TYPE = 9
-												   "COMPOUND", // COMPOUND_TYPE = 10
-												   "INT_ARRAY", // INT_ARRAY_TYPE = 11
-												   "LONG_ARRAY" // LONG_ARRAY_TYPE = 12
-	);
+	@Deprecated
+	static final List<String> TYPE_NAMES = NbtType.NAMES;
 
-	byte type();
+	@Deprecated
+	static boolean isTypeValid(byte type) {
+		return NbtType.isValid(type);
+	}
+
+	@Deprecated
+	static String nameOf(byte type) {
+		return NbtType.nameOf(type);
+	}
+
+	NbtType type();
 
 	default <T> T as(Codec<T, NbtElement> codec) throws CodecException {
 		return codec.fromR(this);

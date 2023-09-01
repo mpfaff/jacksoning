@@ -1,5 +1,7 @@
 package dev.pfaff.jacksoning.util.nbt;
 
+import dev.pfaff.jacksoning.util.codec.Codec;
+import dev.pfaff.jacksoning.util.codec.CodecException;
 import org.jetbrains.annotations.Nullable;
 
 public interface NbtList extends NbtElement {

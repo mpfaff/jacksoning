@@ -1,5 +1,8 @@
 package dev.pfaff.jacksoning.util.nbt;
 
+import dev.pfaff.jacksoning.util.codec.Codec;
+import dev.pfaff.jacksoning.util.codec.CodecException;
+
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_COMPOUND;
 
 public interface Container {

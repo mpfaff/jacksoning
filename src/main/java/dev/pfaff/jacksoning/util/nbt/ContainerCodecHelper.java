@@ -1,11 +1,13 @@
 package dev.pfaff.jacksoning.util.nbt;
 
+import dev.pfaff.jacksoning.util.codec.Codec;
+import dev.pfaff.jacksoning.util.codec.CodecException;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 public interface ContainerCodecHelper<T> {
 	void read(NbtCompound nbt, T container) throws CodecException;

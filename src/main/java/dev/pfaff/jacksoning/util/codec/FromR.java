@@ -1,4 +1,4 @@
-package dev.pfaff.jacksoning.util.nbt;
+package dev.pfaff.jacksoning.util.codec;
 
 @FunctionalInterface
 public interface FromR<T, R> {

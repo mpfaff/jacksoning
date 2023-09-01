@@ -1,4 +1,4 @@
-package dev.pfaff.jacksoning.util.nbt;
+package dev.pfaff.jacksoning.util.codec;
 
 import io.netty.util.internal.EmptyArrays;
 

@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning.server.shop;
 
-import dev.pfaff.jacksoning.util.nbt.CodecException;
+import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;

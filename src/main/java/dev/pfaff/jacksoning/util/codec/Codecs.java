@@ -1,4 +1,4 @@
-package dev.pfaff.jacksoning.util.nbt;
+package dev.pfaff.jacksoning.util.codec;
 
 import java.util.Arrays;
 import java.util.List;

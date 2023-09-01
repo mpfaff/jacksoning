@@ -1,7 +1,7 @@
 package dev.pfaff.jacksoning.server;
 
 import dev.pfaff.jacksoning.PlayerRole;
-import dev.pfaff.jacksoning.util.nbt.CodecException;
+import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;

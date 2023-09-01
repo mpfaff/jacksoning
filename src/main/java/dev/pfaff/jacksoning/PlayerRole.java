@@ -2,8 +2,7 @@ package dev.pfaff.jacksoning;
 
 import dev.pfaff.jacksoning.server.IGamePlayer;
 import dev.pfaff.jacksoning.server.RoleState;
-import dev.pfaff.jacksoning.util.nbt.Codec;
-import dev.pfaff.jacksoning.util.nbt.Codecs;
+import dev.pfaff.jacksoning.util.codec.Codecs;
 import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.command.argument.EnumArgumentType;
@@ -25,10 +24,10 @@ public enum PlayerRole implements StringIdentifiable {
 
 	public static final PlayerRole DEFAULT = None;
 
-	public static final dev.pfaff.jacksoning.util.nbt.Codec<PlayerRole, String> STRING_CODEC = Codecs.enumAsString(
+	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, String> STRING_CODEC = Codecs.enumAsString(
 		PlayerRole.class,
 		PlayerRole::asString);
-	public static final dev.pfaff.jacksoning.util.nbt.Codec<PlayerRole, NbtElement> NBT_CODEC = NbtCodecs.NBT_STRING.then(
+	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, NbtElement> NBT_CODEC = NbtCodecs.NBT_STRING.then(
 		STRING_CODEC);
 
 	public final String id;

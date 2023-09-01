@@ -3,7 +3,7 @@ package dev.pfaff.jacksoning.mixin;
 import dev.pfaff.jacksoning.server.IGamePlayer;
 import dev.pfaff.jacksoning.server.PlayerData;
 import dev.pfaff.jacksoning.server.ServerSidebar;
-import dev.pfaff.jacksoning.util.nbt.CodecException;
+import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.MinecraftServer;
