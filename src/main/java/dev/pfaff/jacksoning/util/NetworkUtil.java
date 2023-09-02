@@ -4,6 +4,7 @@ import dev.pfaff.jacksoning.Jacksoning;
 import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
+import org.slf4j.event.Level;
 
 import java.nio.charset.StandardCharsets;
 
@@ -56,7 +57,7 @@ public final class NetworkUtil {
 
 	public static StringOrText readText(PacketByteBuf buf) {
 		byte tag = buf.readByte();
-		Jacksoning.LOGGER.info("Received a type:" + tag + " text");
+		Jacksoning.LOGGER.log(Level.DEBUG, () -> "Received a type:" + tag + " text");
 		return switch (tag) {
 			case TEXT_REPR_STRING -> StringOrText.of(readTextReprString(buf));
 			case TEXT_REPR_TEXT -> StringOrText.of(readTextReprText(buf));

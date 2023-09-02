@@ -26,10 +26,6 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 	@Final
 	public MinecraftServer server;
 
-	@Shadow
-	@Final
-	private static Logger LOGGER;
-
 	@Unique
 	public final PlayerData playerData = new PlayerData();
 

@@ -30,6 +30,10 @@ public abstract class ChangeNotifier<T> {
 		return get();
 	}
 
+	public T input() {
+		return input;
+	}
+
 	public static <T> ChangeNotifier<T> identity() {
 		return new ChangeNotifier<>() {
 			@Override

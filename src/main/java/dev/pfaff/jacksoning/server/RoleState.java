@@ -10,6 +10,8 @@ import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.event.Level;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -32,11 +34,22 @@ public abstract sealed class RoleState implements Container {
 		state.readNbt(r);
 		return state;
 	})).orElse((e, r) -> {
-		JacksoningServer.LOGGER.error("Invalid role state", e);
+		JacksoningServer.LOGGER.log(Level.ERROR, "Invalid role state", e);
 		return PlayerRole.DEFAULT.newState();
 	});
 
 	public abstract PlayerRole role();
+
+	@Nullable
+	public final Shop shop() {
+		return switch (this) {
+			case RoleState.None ignored -> null;
+			case RoleState.UNLeader ignored -> null;
+			case RoleState.Referee ignored -> null;
+			case RoleState.Jackson jackson -> jackson.shop;
+			case RoleState.Mistress mistress -> mistress.shop;
+		};
+	}
 
 	@MustBeInvokedByOverriders
 	@Override

@@ -1,4 +1,4 @@
-package dev.pfaff.jacksoning;
+package dev.pfaff.jacksoning.sidebar;
 
 import com.google.common.base.Preconditions;
 import dev.pfaff.jacksoning.util.StringOrText;
@@ -38,27 +38,46 @@ public sealed interface SidebarCommand {
 		byte tag = buf.readByte();
 		return switch (tag) {
 			case OPCODE_TRUNCATE -> new Truncate(buf.readUnsignedByte());
-			case OPCODE_SET_LINE_STRING -> setLine(buf.readUnsignedByte(),
-												   new StringOrText(readTextReprString(buf), null));
-			case OPCODE_SET_LINE_TEXT -> setLine(buf.readUnsignedByte(), new StringOrText(null, readTextReprText(buf)));
+			case OPCODE_SET_LINE_STRING -> {
+				int index = buf.readUnsignedByte();
+				byte flags = buf.readByte();
+				yield new SetLine(index, new StringOrText(readTextReprString(buf), null), flags);
+			}
+			case OPCODE_SET_LINE_TEXT -> {
+				int index = buf.readUnsignedByte();
+				byte flags = buf.readByte();
+				yield new SetLine(index, new StringOrText(null, readTextReprText(buf)), flags);
+			}
 			default -> throw new DecoderException("Unrecognized sidebar command: " + tag);
 		};
 	}
 
-	static SidebarCommand truncate(int length) {
+	static Truncate truncate(int length) {
 		Preconditions.checkPositionIndex(length, 255, "Line count out of bounds");
 		return TRUNCATES.get(length);
 	}
 
-	static SidebarCommand setLine(int index, String string) {
+	static SetLine setLine(int index, StringOrText text, Alignment alignment) {
+		return new SetLine(index, text, (byte) alignment.ordinal());
+	}
+
+	static SetLine setLine(int index, String string, Alignment alignment) {
+		return setLine(index, StringOrText.of(string), alignment);
+	}
+
+	static SetLine setLine(int index, Text text, Alignment alignment) {
+		return setLine(index, StringOrText.of(text), alignment);
+	}
+
+	static SetLine setLine(int index, StringOrText text) {
+		return setLine(index, text, Alignment.Left);
+	}
+
+	static SetLine setLine(int index, String string) {
 		return setLine(index, StringOrText.of(string));
 	}
 
-	static SidebarCommand setLine(int index, StringOrText text) {
-		return new SetLine(index, text);
-	}
-
-	static SidebarCommand setLine(int index, Text text) {
+	static SetLine setLine(int index, Text text) {
 		return setLine(index, StringOrText.of(text));
 	}
 
@@ -79,9 +98,13 @@ public sealed interface SidebarCommand {
 		}
 	}
 
-	public record SetLine(int index, StringOrText text) implements SidebarCommand {
+	public record SetLine(int index, StringOrText text, byte flags) implements SidebarCommand {
 		public SetLine {
 			Preconditions.checkElementIndex(index, 254, "Line index out of bounds");
+		}
+
+		public Alignment alignment() {
+			return Alignment.fromByte(flags);
 		}
 
 		@Override
@@ -93,6 +116,7 @@ public sealed interface SidebarCommand {
 		public void writePacket(PacketByteBuf buf) {
 			SidebarCommand.super.writePacket(buf);
 			buf.writeByte(index);
+			buf.writeByte(flags);
 			if (text.string() != null) {
 				writeTextUntagged(buf, text.string());
 			} else {

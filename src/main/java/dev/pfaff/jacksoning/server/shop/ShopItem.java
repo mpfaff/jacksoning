@@ -11,6 +11,8 @@ public interface ShopItem {
 
 	boolean isUpgrade();
 
+	int initialLevel();
+
 	int maxLevel();
 
 	String name(int level);
@@ -21,9 +23,64 @@ public interface ShopItem {
 
 	int cost(int level);
 
-	public default void onPurchase(IGamePlayer player, int level) {}
+	public void onPurchase(IGamePlayer player, int level);
 
-	public default void onTick(IGamePlayer player, int level) {}
+	public void onTick(IGamePlayer player, int level);
+
+	public default ShopItem initialLevel(int level) {
+		var self = this;
+		return new ShopItem() {
+			@Override
+			public String id() {
+				return self.id();
+			}
+
+			@Override
+			public boolean isUpgrade() {
+				return self.isUpgrade();
+			}
+
+			@Override
+			public int initialLevel() {
+				return level;
+			}
+
+			@Override
+			public int maxLevel() {
+				return self.maxLevel();
+			}
+
+			@Override
+			public String name(int level) {
+				return self.name(level);
+			}
+
+			@Override
+			public ItemStack icon(int level) {
+				return self.icon(level);
+			}
+
+			@Override
+			public List<String> lore(int level) {
+				return self.lore(level);
+			}
+
+			@Override
+			public int cost(int level) {
+				return self.cost(level);
+			}
+
+			@Override
+			public void onPurchase(IGamePlayer player, int level) {
+				self.onPurchase(player, level);
+			}
+
+			@Override
+			public void onTick(IGamePlayer player, int level) {
+				self.onTick(player, level);
+			}
+		};
+	}
 
 	public default ShopItem onTick(BiConsumer<IGamePlayer, Integer> onTick) {
 		var self = this;
@@ -36,6 +93,11 @@ public interface ShopItem {
 			@Override
 			public boolean isUpgrade() {
 				return self.isUpgrade();
+			}
+
+			@Override
+			public int initialLevel() {
+				return self.initialLevel();
 			}
 
 			@Override
@@ -90,6 +152,11 @@ public interface ShopItem {
 			}
 
 			@Override
+			public int initialLevel() {
+				return self.initialLevel();
+			}
+
+			@Override
 			public int maxLevel() {
 				return self.maxLevel();
 			}
@@ -140,6 +207,11 @@ public interface ShopItem {
 			}
 
 			@Override
+			public int initialLevel() {
+				return 0;
+			}
+
+			@Override
 			public int maxLevel() {
 				return entries.size();
 			}
@@ -163,6 +235,16 @@ public interface ShopItem {
 			public int cost(int level) {
 				return entries.get(level - 1).cost();
 			}
+
+			@Override
+			public void onPurchase(IGamePlayer player, int level) {
+				assert level <= maxLevel();
+			}
+
+			@Override
+			public void onTick(IGamePlayer player, int level) {
+				assert level <= maxLevel();
+			}
 		};
 	}
 
@@ -180,6 +262,11 @@ public interface ShopItem {
 			@Override
 			public boolean isUpgrade() {
 				return false;
+			}
+
+			@Override
+			public int initialLevel() {
+				return 0;
 			}
 
 			@Override
@@ -205,6 +292,16 @@ public interface ShopItem {
 			@Override
 			public int cost(int level) {
 				return cost;
+			}
+
+			@Override
+			public void onPurchase(IGamePlayer player, int level) {
+				assert level == 0 || level == 1;
+			}
+
+			@Override
+			public void onTick(IGamePlayer player, int level) {
+				assert level == 0 || level == 1;
 			}
 		};
 	}

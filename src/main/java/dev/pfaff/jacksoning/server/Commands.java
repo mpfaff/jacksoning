@@ -4,16 +4,21 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.server.shop.PurchaseResult;
 import dev.pfaff.jacksoning.server.shop.Shop;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+
+import java.util.Objects;
 
 import static dev.pfaff.jacksoning.Constants.TYPE_PLAYER_ROLE;
 import static net.minecraft.server.command.CommandManager.argument;
@@ -60,6 +65,15 @@ public final class Commands {
 		});
 	}
 
+	private static Shop getShop(CommandContext<ServerCommandSource> context) {
+		var gp = IGamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
+		if (!gp.game().state().isRunning()) throw new CommandException(Text.translatable("message.jacksoning.shop_not_running"));
+		if (!gp.data().isSpawned()) throw new CommandException(Text.translatable("message.jacksoning.shop_not_spawned"));
+		var shop = gp.roleState().shop();
+		if (shop == null) throw new CommandException(Text.translatable("message.jacksoning.shop_cannot_use"));
+		return shop;
+	}
+
 	public static void register(CommandDispatcher<ServerCommandSource> dispatcher,
 								CommandRegistryAccess registryAccess,
 								CommandManager.RegistrationEnvironment environment) {
@@ -85,22 +99,28 @@ public final class Commands {
 			boolean enable = BoolArgumentType.getBool(context, "enable");
 			IGame.cast(context.getSource().getServer()).state().devMode(enable);
 			return 0;
-		})))).then(literal("shop").requires(ServerCommandSource::isExecutedByPlayer).then(literal("list").executes(catchingIllegalState(context -> {
-			var gp = IGamePlayer.cast(context.getSource().getPlayer());
-			var shop = switch (gp.roleState()) {
-				case RoleState.None ignored -> null;
-				case RoleState.UNLeader ignored -> null;
-				case RoleState.Referee ignored -> null;
-				case RoleState.Jackson jackson -> jackson.shop;
-				case RoleState.Mistress mistress -> mistress.shop;
-			};
-			if (shop == null) {
-				context.getSource().sendError(Text.of("You cannot access the shop"));
-				return 1;
-			}
+		})))));
+		dispatcher.register(literal("shop").requires(ServerCommandSource::isExecutedByPlayer)
+										   .then(literal("list").executes(catchingIllegalState(context -> {
+			var shop = getShop(context);
 			sendShop(context, shop);
 			return 0;
-		})))));
+		}))).then(literal("buy").then(argument("item", StringArgumentType.word()).suggests((context, builder) -> {
+			var shop = getShop(context);
+			for (var id : shop.items().keySet()) {
+				builder.suggest(id);
+			}
+			return builder.buildFuture();
+		}).executes(context -> {
+			var shop = getShop(context);
+			var gp = IGamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
+			var result = shop.purchase(gp, StringArgumentType.getString(context, "item"));
+			if (result != PurchaseResult.Success) {
+				context.getSource().sendError(result.text);
+				return 1;
+			}
+			return 0;
+		}))));
 		dispatcher.register(literal("setrole").requires(Commands::isReferee)
 											  .then(argument("players", EntityArgumentType.players()).then(argument(
 												  "role",

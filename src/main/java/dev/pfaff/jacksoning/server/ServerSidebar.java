@@ -1,9 +1,9 @@
 package dev.pfaff.jacksoning.server;
 
 import dev.pfaff.jacksoning.Config;
-import dev.pfaff.jacksoning.util.AndIntChangeNotifier;
+import dev.pfaff.jacksoning.sidebar.Alignment;
 import dev.pfaff.jacksoning.util.ChangeNotifier;
-import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.util.memo.DiffingComputerList;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -11,20 +11,19 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 import static dev.pfaff.jacksoning.Constants.LABEL_ROLE;
+import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_FALSE;
+import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_TRUE;
 import static dev.pfaff.jacksoning.Constants.PACKET_UPDATE_UI;
-import static dev.pfaff.jacksoning.SidebarCommand.setLine;
-import static dev.pfaff.jacksoning.SidebarCommand.truncate;
+import static dev.pfaff.jacksoning.sidebar.SidebarCommand.setLine;
+import static dev.pfaff.jacksoning.sidebar.SidebarCommand.truncate;
 
 public final class ServerSidebar {
-	public final AndIntChangeNotifier<PlayerRole> roleChangeNotifier = AndIntChangeNotifier.identity();
-	public final AndIntChangeNotifier<GameLifecycle> gameLifecycleChangeNotifier = AndIntChangeNotifier.identity();
 	public final ChangeNotifier<BlockPos> blockPosChangeNotifier = ChangeNotifier.equality();
 	// stupid long field names. I just need them to be unique per call-site.
-	public final AndIntChangeNotifier<Boolean> insideJacksonZoneChangeNotifier = AndIntChangeNotifier.equality();
-	public final AndIntChangeNotifier<Integer> economyChangeNotifier = AndIntChangeNotifier.equality();
-	public final AndIntChangeNotifier<Integer> isDevModeChangeNotifier = AndIntChangeNotifier.equality();
+	public boolean insideJacksonZoneCached = false;
 
 	private int previousLength = 0;
+	private final DiffingComputerList<Void> lineDiffer = new DiffingComputerList<>();
 
 	public void tick(ServerPlayerEntity p) {
 		var gp = IGamePlayer.cast(p);
@@ -34,72 +33,74 @@ public final class ServerSidebar {
 		truncate(69).writePacket(buf);
 
 		// write the lines, counting as we go
-		int i = 0;
+		int count = 0;
 
 		var gs = gp.game().state();
 		var gameLifecycle = gs.lifecycle();
 
-		if (gameLifecycleChangeNotifier.updateAndGet(gameLifecycle, i)) {
-			setLine(i, switch (gameLifecycle) {
-				case NotStarted -> "Awaiting Jackson";
-				case Running -> "Rocking";
-				case Ended -> "Concert Ended";
-			}).writePacket(buf);
-		}
-		i++;
+		lineDiffer.get(count++, gameLifecycle, (a, ctx, i) -> {
+			setLine(i, a.text, Alignment.Center).writePacket(ctx);
+			return null;
+		}, buf);
 
 		if (gameLifecycle == GameLifecycle.Running) {
 			if (gp.isReferee()) {
-				setLine(i++, "Time: " + gs.time()).writePacket(buf);
+				lineDiffer.get(count++, gs.time(), (a, ctx, i) -> {
+					setLine(i, "Time: " + a).writePacket(ctx);
+					return null;
+				}, buf);
 			}
 
 			if (gp.data().isSpawned()) {
 				// TODO: only make copy when necessary.
 				var blockPos = new BlockPos(p.getBlockPos());
 				if (blockPosChangeNotifier.updateAndGet(blockPos)) {
-					insideJacksonZoneChangeNotifier.updateA(gp.isInsideJacksonZone());
+					insideJacksonZoneCached = gp.isInsideJacksonZone();
 				}
-				if (insideJacksonZoneChangeNotifier.updateBAndGet(i)) {
-					boolean inside = insideJacksonZoneChangeNotifier.inputA();
-					// TODO: only send when inside changes, not just when blockPos changes
-					setLine(i, inside ? "Inside Neverland Ranch" : "Outside Neverland Ranch").writePacket(buf);
-				}
-				i++;
+				lineDiffer.get(count++, insideJacksonZoneCached, (a, ctx, i) -> {
+					setLine(i, a ? MESSAGE_INSIDE_JACKSON_ZONE_TRUE : MESSAGE_INSIDE_JACKSON_ZONE_FALSE).writePacket(ctx);
+					return null;
+				}, buf);
 
 				switch (gp.data().role()) {
 					case Jackson, Mistress -> {
-						if (economyChangeNotifier.updateAndGet(gs.economy(), i)) {
-							setLine(i, "Economy: " + gs.economy()).writePacket(buf);
-						}
-						i++;
+						lineDiffer.get(count++, gs.economy(), (a, ctx, i) -> {
+							setLine(i, "Economy: " + a).writePacket(ctx);
+							return null;
+						}, buf);
 
-						setLine(i++, "Groove drop in " + String.format("%.1f", gs.timeUntilNextGroove() / 20f) + "s").writePacket(buf);
+						lineDiffer.get(count++, gs.timeUntilNextGroove(), (a, ctx, i) -> {
+							setLine(i, "Groove drop in " + String.format("%.1f", a / 20f) + "s").writePacket(ctx);
+							return null;
+						}, buf);
 					}
 				}
 			} else {
-				setLine(i++, "Respawning in " + String.format("%.1f", gp.data().respawnTime / 20f) + "s").writePacket(buf);
+				lineDiffer.get(count++, gp.data().respawnTime, (a, ctx, i) -> {
+					setLine(i, "Respawning in " + String.format("%.1f", a / 20f) + "s").writePacket(ctx);
+					return null;
+				}, buf);
 			}
 		}
 
-		if (roleChangeNotifier.updateBAndGet(i)) {
-			var role = gp.data().role();
-			setLine(i, LABEL_ROLE.copy().append(Text.translatable(role.translationKey))).writePacket(buf);
-		}
-		i++;
+		lineDiffer.get(count++, gp.data().role(), (a, ctx, i) -> {
+			setLine(i, LABEL_ROLE.copy().append(Text.translatable(a.translationKey))).writePacket(ctx);
+			return null;
+		}, buf);
 
 		if (Config.devMode()) {
-			if (isDevModeChangeNotifier.updateBAndGet(i)) {
-				setLine(i, "Dev mode").writePacket(buf);
-			}
-			i++;
+			lineDiffer.get(count++, (ctx, i) -> {
+				setLine(i, "Dev mode").writePacket(ctx);
+				return null;
+			}, buf);
 		}
 
 		// set the real line count
 		int writerIndex = buf.writerIndex();
 		buf.writerIndex(0);
-		truncate(i).writePacket(buf);
-		if (i != previousLength) {
-			previousLength = i;
+		truncate(count).writePacket(buf);
+		if (count != previousLength) {
+			previousLength = count;
 		} else {
 			buf.readerIndex(buf.writerIndex());
 		}

@@ -1,15 +1,15 @@
 package dev.pfaff.jacksoning.client;
 
 import com.mojang.logging.LogUtils;
+import dev.pfaff.jacksoning.util.LogDestupify;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import org.slf4j.Logger;
 
 import static dev.pfaff.jacksoning.Constants.PACKET_UPDATE_UI;
 
 public class JacksoningClient implements ClientModInitializer {
-	public static final Logger LOGGER = LogUtils.getLogger();
+	public static final LogDestupify LOGGER = new LogDestupify(LogUtils.getLogger());
 
 	@Override
 	public void onInitializeClient() {

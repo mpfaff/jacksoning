@@ -8,5 +8,17 @@
   "item.jacksoning.groove": "Groove",
   "label.jacksoning.role": "Role",
   "message.jacksoning.game_over.jackson_won": "Game over: Jackson won",
-  "message.jacksoning.game_over.un_won": "Game over: the UN leaders won"
+  "message.jacksoning.game_over.un_won": "Game over: the UN leaders won",
+  "message.jacksoning.shop_cannot_use": "Only Jackson and his mistresses can use the shop.",
+  "message.jacksoning.shop_inconsistency": "Spooky action at a distance: is someone playing tricks on us?",
+  "message.jacksoning.shop_max_level": "That upgrade is maxed out!",
+  "message.jacksoning.shop_not_enough_groove": "You lack enough groove for this purchase.",
+  "message.jacksoning.shop_no_such_item": "That item doesn't exist.",
+  "message.jacksoning.shop_not_running": "The game must be active to use the shop.",
+  "message.jacksoning.shop_not_spawned": "You must be spawned in to use the shop.",
+  "message.jacksoning.game_lifecycle.not_started": "Awaiting Jackson",
+  "message.jacksoning.game_lifecycle.running": "Rocking",
+  "message.jacksoning.game_lifecycle.ended": "Concert Ended",
+  "message.jacksoning.inside_jackson_zone.true": "Inside Neverland Ranch",
+  "message.jacksoning.inside_jackson_zone.false": "Outside Neverland Ranch"
 }

@@ -17,6 +17,8 @@ public final class Constants {
 	public static final Text LABEL_ROLE = Text.translatable("label.jacksoning.role").append(": ");
 	public static final Text MESSAGE_GAME_OVER_JACKSON_WON = Text.translatable("message.jacksoning.game_over.jackson_won");
 	public static final Text MESSAGE_GAME_OVER_UN_WON = Text.translatable("message.jacksoning.game_over.un_won");
+	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_TRUE = Text.translatable("message.jacksoning.inside_jackson_zone.true");
+	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_FALSE = Text.translatable("message.jacksoning.inside_jackson_zone.false");
 
 	public static final String PERSISTENT_STATE_ID = "jacksoning";
 
@@ -25,8 +27,8 @@ public final class Constants {
 																			EntityAttributes.GENERIC_ATTACK_DAMAGE,
 																			EntityAttributes.GENERIC_ARMOR);
 	public static final String MODIFIER_GROUP = "jacksoning";
-	public static final UUID MODIFIER_MAX_HEALTH_ADDIT = UUID.fromString("62a0f540-0883-4b78-8271-80ef2a4f6365");
-	public static final UUID MODIFIER_ATTACK_DAMAGE_ADDIT = UUID.fromString("62a0f540-0883-4b78-8271-80ef2a4f6365");
+	public static final UUID MODIFIER_JACKSON_MAX_HEALTH_BUF = UUID.fromString("62a0f540-0883-4b78-8271-80ef2a4f6365");
+	public static final UUID MODIFIER_UN_LEADER_ATTACK_DAMAGE_DEBUF = UUID.fromString("62a0f540-0883-4b78-8271-80ef2a4f6365");
 
 	public static final Identifier ITEM_COBBLE_TURRET = new Identifier("k_turrets:cobble_turret_item");
 }

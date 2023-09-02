@@ -22,6 +22,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameMode;
+import org.slf4j.event.Level;
 
 import java.util.HashSet;
 import java.util.List;
@@ -33,9 +34,9 @@ import static dev.pfaff.jacksoning.Config.jacksonZoneRadius;
 import static dev.pfaff.jacksoning.Config.respawnCooldown;
 import static dev.pfaff.jacksoning.Constants.ITEM_COBBLE_TURRET;
 import static dev.pfaff.jacksoning.Constants.MODIFIED_ATTRIBUTES;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_ATTACK_DAMAGE_ADDIT;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_UN_LEADER_ATTACK_DAMAGE_DEBUF;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_GROUP;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_MAX_HEALTH_ADDIT;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH_BUF;
 import static dev.pfaff.jacksoning.server.PlayerData.RESPAWN_TIME_SPAWNED;
 
 public interface IGamePlayer {
@@ -52,19 +53,16 @@ public interface IGamePlayer {
 	}
 
 	public default void roleState(RoleState state) {
-		// TODO: would be better to use event listeners and have listeners on various properties and set update the
-		//  change notifiers in there...
 		data().roleState = state;
-		sidebar().roleChangeNotifier.updateA(state.role());
 	}
 
 	public default void setRole(PlayerRole role) {
-		JacksoningServer.LOGGER.info("Setting role of " + this + " to " + role);
+		JacksoningServer.LOGGER.log(Level.INFO, () -> "Setting role of " + this + " to " + role);
 		roleState(role.newState());
 	}
 
 	public default void setInitRole(PlayerRole role) {
-		JacksoningServer.LOGGER.info("Setting init role of " + this + " to " + role);
+		JacksoningServer.LOGGER.log(Level.INFO, () -> "Setting init role of " + this + " to " + role);
 		data().initRole = role;
 		setRole(role);
 	}
@@ -109,7 +107,7 @@ public interface IGamePlayer {
 			inst.removeModifier(id);
 		}
 		modifier = new EntityAttributeModifier(id, MODIFIER_GROUP, value, operation);
-		inst.addTemporaryModifier(modifier);
+		inst.addPersistentModifier(modifier);
 	}
 
 	public default void tickJacksoning() {
@@ -126,20 +124,21 @@ public interface IGamePlayer {
 					case Jackson -> {
 						applyModifier(keep,
 									  EntityAttributes.GENERIC_MAX_HEALTH,
-									  MODIFIER_MAX_HEALTH_ADDIT,
+									  MODIFIER_JACKSON_MAX_HEALTH_BUF,
 									  jacksonBaseHealthBoost(),
 									  EntityAttributeModifier.Operation.ADDITION);
 					}
 					case UNLeader -> {
 						applyModifier(keep,
 									  EntityAttributes.GENERIC_ATTACK_DAMAGE,
-									  MODIFIER_ATTACK_DAMAGE_ADDIT,
+									  MODIFIER_UN_LEADER_ATTACK_DAMAGE_DEBUF,
 									  -4.0,
 									  EntityAttributeModifier.Operation.ADDITION);
 					}
 					default -> {
 					}
 				}
+				// TODO: gonna have to make `keep` accessible to the shop item onTick handler
 				for (var attribute : MODIFIED_ATTRIBUTES) {
 					var inst = Objects.requireNonNull(asMc().getAttributeInstance(attribute));
 					for (var modifier : inst.getModifiers()) {
@@ -157,7 +156,7 @@ public interface IGamePlayer {
 							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 20 * 20));
 							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 20 * 20));
 							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 20 * 20));
-							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 20 * 20, 3));
+							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 20 * 20, 2));
 						}
 					}
 				}

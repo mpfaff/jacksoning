@@ -18,17 +18,23 @@ import static dev.pfaff.jacksoning.server.shop.ShopItem.upgrade;
 
 public final class ShopItems {
 	private static final List<ItemStack> ARMOR = Stream.of(Items.LEATHER_HELMET,
+														   Items.LEATHER_CHESTPLATE,
+														   Items.LEATHER_LEGGINGS,
+														   Items.LEATHER_BOOTS,
+
 														   Items.GOLDEN_HELMET,
+														   Items.GOLDEN_CHESTPLATE,
+														   Items.GOLDEN_LEGGINGS,
+														   Items.GOLDEN_BOOTS,
+
 														   Items.IRON_HELMET,
+														   Items.IRON_CHESTPLATE,
+														   Items.IRON_LEGGINGS,
+														   Items.IRON_BOOTS,
+
 														   Items.DIAMOND_HELMET,
 														   Items.DIAMOND_CHESTPLATE,
-														   Items.LEATHER_LEGGINGS,
-														   Items.GOLDEN_LEGGINGS,
-														   Items.IRON_LEGGINGS,
 														   Items.DIAMOND_LEGGINGS,
-														   Items.LEATHER_BOOTS,
-														   Items.GOLDEN_BOOTS,
-														   Items.IRON_BOOTS,
 														   Items.DIAMOND_BOOTS)
 													   .map(ItemStack::new)
 													   .peek(ShopItems::setUnbreakable)
@@ -39,14 +45,17 @@ public final class ShopItems {
 														   Items.WOODEN_AXE,
 														   Items.WOODEN_PICKAXE,
 														   Items.WOODEN_SHOVEL,
+
 														   Items.STONE_SWORD,
 														   Items.STONE_AXE,
 														   Items.STONE_PICKAXE,
 														   Items.STONE_SHOVEL,
+
 														   Items.IRON_SWORD,
 														   Items.IRON_AXE,
 														   Items.IRON_PICKAXE,
 														   Items.IRON_SHOVEL,
+
 														   Items.DIAMOND_SWORD,
 														   Items.DIAMOND_AXE,
 														   Items.DIAMOND_PICKAXE,
@@ -71,9 +80,10 @@ public final class ShopItems {
 			new UpgradeEntry("Iron", new ItemStack(Items.IRON_HELMET), List.of(), baseCost + 8 * 2),
 			new UpgradeEntry("Diamond", new ItemStack(Items.DIAMOND_HELMET), List.of(), baseCost + 8 * 3),
 			})).onPurchase((p, l) -> {
+			l -= 1;
 			var armor = p.asMc().getInventory().armor;
 			for (int i = 0; i < 4; i++) {
-				armor.set(3 - i, ARMOR.get(i * ARMOR_LEVELS).copy());
+				armor.set(3 - i, ARMOR.get(l * ARMOR_LEVELS + i).copy());
 			}
 		});
 	}
@@ -85,8 +95,9 @@ public final class ShopItems {
 			new UpgradeEntry("Iron", new ItemStack(Items.IRON_SWORD), List.of(), costs.get(2)),
 			new UpgradeEntry("Diamond", new ItemStack(Items.DIAMOND_SWORD), List.of(), costs.get(3)),
 			})).onPurchase((p, l) -> {
+			l -= 1;
 			for (int i = 0; i < 4; i++) {
-				p.asMc().giveItemStack(TOOLS.get(i * TOOL_LEVELS).copy());
+				p.asMc().giveItemStack(TOOLS.get(l * TOOL_LEVELS + i).copy());
 			}
 		});
 	}
@@ -113,60 +124,23 @@ public final class ShopItems {
 				 List.of(),
 				 2,
 				 1),
-		giveItem("shield",
-				 "Shield",
-				 new ItemStack(Items.SHIELD),
-				 List.of(),
-				 8,
-				 -1),
-		giveItem("bow",
-				 "Bow",
-				 setUnbreakable(new ItemStack(Items.BOW)),
-				 List.of(),
-				 6,
-				 -1),
-		giveItem("crossbow",
-				 "Crossbow",
-				 setUnbreakable(new ItemStack(Items.CROSSBOW)),
-				 List.of(),
-				 6,
-				 3),
-		giveItem("arrows",
-				 "Arrows",
-				 setUnbreakable(new ItemStack(Items.ARROW,
-											  32)),
-				 List.of(),
-				 2,
-				 -1),
-		giveItem("totem_of_undying",
-				 "Totem of Undying",
-				 new ItemStack(Items.TOTEM_OF_UNDYING),
-				 List.of(),
-				 32,
-				 -1),
+		giveItem("shield", "Shield", new ItemStack(Items.SHIELD), List.of(), 8, -1),
+		giveItem("bow", "Bow", setUnbreakable(new ItemStack(Items.BOW)), List.of(), 6, -1),
+		giveItem("crossbow", "Crossbow", setUnbreakable(new ItemStack(Items.CROSSBOW)), List.of(), 6, 3),
+		giveItem("arrows", "Arrows", setUnbreakable(new ItemStack(Items.ARROW, 32)), List.of(), 2, -1),
+		giveItem("totem_of_undying", "Totem of Undying", new ItemStack(Items.TOTEM_OF_UNDYING), List.of(), 32, -1),
 		// TODO: cobble drone
 		//giveItem("cobble_drone", "Cobble Drone", new ItemStack(), List.of(), 12, -1),
-		giveItem("cobblestone",
-				 "Cobblestone",
-				 new ItemStack(Items.COBBLESTONE, 32),
-				 List.of(),
-				 1,
-				 -1),
-		giveItem("bucket",
-				 "Bucket",
-				 new ItemStack(Items.BUCKET),
-				 List.of(),
-				 16,
-				 -1)
-	);
+		giveItem("cobblestone", "Cobblestone", new ItemStack(Items.COBBLESTONE, 32), List.of(), 1, -1),
+		giveItem("bucket", "Bucket", new ItemStack(Items.BUCKET), List.of(), 16, -1));
 
 	public static final Map<String, ShopItem> JACKSON = Stream.concat(Stream.of(armorUpgrade(16),
-																  toolUpgrade(List.of(0, 2, 9, 20))
-																  // TODO: effects
+																				toolUpgrade(List.of(0, 2, 9, 20)).initialLevel(1)
+																				// TODO: effects
 	), COMMON.stream()).collect(Collectors.toUnmodifiableMap(ShopItem::id, Function.identity()));
 
 	public static final Map<String, ShopItem> MISTRESS = Stream.concat(Stream.of(armorUpgrade(24),
-																				toolUpgrade(List.of(0, 8, 20, 40))
-																				// TODO: effects
+																				 toolUpgrade(List.of(0, 8, 20, 40))
+																				 // TODO: effects
 	), COMMON.stream()).collect(Collectors.toUnmodifiableMap(ShopItem::id, Function.identity()));
 }
