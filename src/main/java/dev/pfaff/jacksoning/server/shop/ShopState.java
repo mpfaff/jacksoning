@@ -17,11 +17,11 @@ import java.util.stream.Stream;
 
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 
-public final class Shop implements Container {
+public final class ShopState implements Container {
 	private final Map<String, ShopItem> shopItems;
 	private final Object2IntMap<String> levels = new Object2IntOpenHashMap<>();
 
-	public Shop(Map<String, ShopItem> shopItems) {
+	public ShopState(Map<String, ShopItem> shopItems) {
 		this.shopItems = shopItems;
 	}
 

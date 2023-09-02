@@ -1,7 +1,7 @@
 package dev.pfaff.jacksoning.server;
 
 import dev.pfaff.jacksoning.PlayerRole;
-import dev.pfaff.jacksoning.server.shop.Shop;
+import dev.pfaff.jacksoning.server.shop.ShopState;
 import dev.pfaff.jacksoning.server.shop.ShopItems;
 import dev.pfaff.jacksoning.util.codec.Codec;
 import dev.pfaff.jacksoning.util.codec.CodecException;
@@ -41,7 +41,7 @@ public abstract sealed class RoleState implements Container {
 	public abstract PlayerRole role();
 
 	@Nullable
-	public final Shop shop() {
+	public final ShopState shop() {
 		return switch (this) {
 			case RoleState.None ignored -> null;
 			case RoleState.UNLeader ignored -> null;
@@ -88,7 +88,7 @@ public abstract sealed class RoleState implements Container {
 		));
 
 		public boolean spawned;
-		public final Shop shop = new Shop(ShopItems.JACKSON);
+		public final ShopState shop = new ShopState(ShopItems.JACKSON);
 
 		@Override
 		public PlayerRole role() {
@@ -113,7 +113,7 @@ public abstract sealed class RoleState implements Container {
 			containerFieldInPlace((Mistress t) -> t.shop, "shop").orElse((e, t, r) -> t.shop.reset())
 		));
 
-		public final Shop shop = new Shop(ShopItems.MISTRESS);
+		public final ShopState shop = new ShopState(ShopItems.MISTRESS);
 
 		@Override
 		public PlayerRole role() {

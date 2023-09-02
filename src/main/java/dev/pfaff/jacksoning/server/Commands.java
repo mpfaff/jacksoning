@@ -8,12 +8,17 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.server.shop.PurchaseResult;
-import dev.pfaff.jacksoning.server.shop.Shop;
+import dev.pfaff.jacksoning.server.shop.ShopState;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -49,7 +54,7 @@ public final class Commands {
 		};
 	}
 
-	private static void sendShop(CommandContext<ServerCommandSource> context, Shop shop) {
+	private static void sendShop(CommandContext<ServerCommandSource> context, ShopState shop) {
 		var src = context.getSource();
 		src.sendMessage(Text.literal("Shop:"));
 		shop.levels().forEach(entry -> {
@@ -65,7 +70,7 @@ public final class Commands {
 		});
 	}
 
-	private static Shop getShop(CommandContext<ServerCommandSource> context) {
+	private static ShopState getShop(CommandContext<ServerCommandSource> context) {
 		var gp = IGamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
 		if (!gp.game().state().isRunning()) throw new CommandException(Text.translatable("message.jacksoning.shop_not_running"));
 		if (!gp.data().isSpawned()) throw new CommandException(Text.translatable("message.jacksoning.shop_not_spawned"));
@@ -100,8 +105,23 @@ public final class Commands {
 			IGame.cast(context.getSource().getServer()).state().devMode(enable);
 			return 0;
 		})))));
-		dispatcher.register(literal("shop").requires(ServerCommandSource::isExecutedByPlayer)
-										   .then(literal("list").executes(catchingIllegalState(context -> {
+		dispatcher.register(literal("shop").requires(ServerCommandSource::isExecutedByPlayer).executes(catchingIllegalState(context -> {
+			var shop = getShop(context);
+			var p = Objects.requireNonNull(context.getSource().getPlayer());
+			p.openHandledScreen(new NamedScreenHandlerFactory() {
+				@Override
+				public Text getDisplayName() {
+					return Text.of("Groove Shop");
+				}
+
+				@Override
+				public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+					return GenericContainerScreenHandler.createGeneric9x3(syncId, inv);
+				}
+			});
+			sendShop(context, shop);
+			return 0;
+		})).then(literal("list").executes(catchingIllegalState(context -> {
 			var shop = getShop(context);
 			sendShop(context, shop);
 			return 0;
