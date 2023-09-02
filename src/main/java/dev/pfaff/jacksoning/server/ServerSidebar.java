@@ -11,6 +11,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 import static dev.pfaff.jacksoning.Constants.LABEL_ROLE;
+import static dev.pfaff.jacksoning.Constants.MESSAGE_ECONOMY_NUMBER_STYLE;
+import static dev.pfaff.jacksoning.Constants.MESSAGE_GROOVE_DROP_NUMBER_STYLE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_FALSE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_TRUE;
 import static dev.pfaff.jacksoning.Constants.PACKET_UPDATE_UI;
@@ -58,19 +60,26 @@ public final class ServerSidebar {
 					insideJacksonZoneCached = gp.isInsideJacksonZone();
 				}
 				lineDiffer.get(count++, insideJacksonZoneCached, (a, ctx, i) -> {
-					setLine(i, a ? MESSAGE_INSIDE_JACKSON_ZONE_TRUE : MESSAGE_INSIDE_JACKSON_ZONE_FALSE).writePacket(ctx);
+					setLine(i,
+							a ? MESSAGE_INSIDE_JACKSON_ZONE_TRUE : MESSAGE_INSIDE_JACKSON_ZONE_FALSE).writePacket(ctx);
 					return null;
 				}, buf);
 
 				switch (gp.data().role()) {
 					case Jackson, Mistress -> {
 						lineDiffer.get(count++, gs.economy(), (a, ctx, i) -> {
-							setLine(i, "Economy: " + a).writePacket(ctx);
+							setLine(i,
+									Text.literal("Economy: ")
+										.append(Text.literal(String.valueOf(a))
+													.setStyle(MESSAGE_ECONOMY_NUMBER_STYLE))).writePacket(ctx);
 							return null;
 						}, buf);
 
 						lineDiffer.get(count++, gs.timeUntilNextGroove(), (a, ctx, i) -> {
-							setLine(i, "Groove drop in " + String.format("%.1f", a / 20f) + "s").writePacket(ctx);
+							setLine(i,
+									Text.literal("Groove drop in ")
+										.append(Text.literal(String.format("%.1f", a / 20f) + "s")
+													.setStyle(MESSAGE_GROOVE_DROP_NUMBER_STYLE))).writePacket(ctx);
 							return null;
 						}, buf);
 					}

@@ -2,7 +2,9 @@ package dev.pfaff.jacksoning;
 
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import java.util.List;
@@ -19,6 +21,9 @@ public final class Constants {
 	public static final Text MESSAGE_GAME_OVER_UN_WON = Text.translatable("message.jacksoning.game_over.un_won");
 	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_TRUE = Text.translatable("message.jacksoning.inside_jackson_zone.true");
 	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_FALSE = Text.translatable("message.jacksoning.inside_jackson_zone.false");
+
+	public static final Style MESSAGE_ECONOMY_NUMBER_STYLE = Style.EMPTY.withColor(Formatting.GREEN);
+	public static final Style MESSAGE_GROOVE_DROP_NUMBER_STYLE = Style.EMPTY.withColor(Formatting.YELLOW);
 
 	public static final String PERSISTENT_STATE_ID = "jacksoning";
 
