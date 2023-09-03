@@ -12,6 +12,6 @@ public enum PurchaseResult {
 	public final Text text;
 
 	PurchaseResult(String id) {
-		this.text = id == null ? null : Text.translatable("message.jacksoning.shop_" + id);
+		this.text = id == null ? null : Text.translatable("message.jacksoning.shop.purchase_result." + id);
 	}
 }

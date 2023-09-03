@@ -1,14 +1,12 @@
 package dev.pfaff.jacksoning.mixin;
 
+import dev.pfaff.jacksoning.server.GamePlayer;
 import dev.pfaff.jacksoning.server.IGamePlayer;
-import dev.pfaff.jacksoning.server.PlayerData;
-import dev.pfaff.jacksoning.server.ServerSidebar;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,26 +25,16 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 	public MinecraftServer server;
 
 	@Unique
-	public final PlayerData playerData = new PlayerData();
-
-	@Unique
-	public ServerSidebar sidebar = new ServerSidebar();
+	public final GamePlayer gamePlayer = new GamePlayer((ServerPlayerEntity) (Object) this);
 
 	@Override
-	public final PlayerData data() {
-		return playerData;
-	}
-
-	@Override
-	public ServerSidebar sidebar() {
-		return sidebar;
+	public GamePlayer gamePlayer() {
+		return gamePlayer;
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
 	private final void tick(CallbackInfo ci) {
-		var p = (ServerPlayerEntity) (Object) this;
-		tickJacksoning();
-		sidebar.tick(p);
+		gamePlayer.tick();
 	}
 
 	@Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
@@ -54,9 +42,9 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 		var nbtWrapper = NbtElement.of(nbt);
 		try {
 			if (nbtWrapper.getAs(PLAYER_NBT_KEY, NBT_COMPOUND.or(null)) instanceof dev.pfaff.jacksoning.util.nbt.NbtCompound inner) {
-				playerData.readNbt(inner);
+				gamePlayer.data.readNbt(inner);
 				// trigger change notifiers
-				roleState(playerData.roleState);
+				gamePlayer.roleState(gamePlayer.data.roleState);
 			}
 		} catch (CodecException e) {
 			throw new RuntimeException(e);
@@ -66,6 +54,6 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 	@Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
 	private final void writeCustomDataFromNbt(NbtCompound nbt, CallbackInfo ci) {
 		var nbtWrapper = NbtElement.of(nbt);
-		nbtWrapper.put(PLAYER_NBT_KEY, data().writeNbt());
+		nbtWrapper.put(PLAYER_NBT_KEY, gamePlayer.data.writeNbt());
 	}
 }

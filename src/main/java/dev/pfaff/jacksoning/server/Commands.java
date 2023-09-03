@@ -6,8 +6,10 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.server.shop.PurchaseResult;
+import dev.pfaff.jacksoning.server.shop.ShopScreenHandler;
 import dev.pfaff.jacksoning.server.shop.ShopState;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.minecraft.command.CommandException;
@@ -16,12 +18,12 @@ import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+import org.slf4j.event.Level;
 
 import java.util.Objects;
 
@@ -34,7 +36,7 @@ public final class Commands {
 		if (source.hasPermissionLevel(2)) return true;
 		var player = source.getPlayer();
 		if (player == null) return false;
-		return IGamePlayer.cast(player).isReferee();
+		return GamePlayer.cast(player).isReferee();
 	}
 
 	public static void registerTypes() {
@@ -50,6 +52,17 @@ public final class Commands {
 			} catch (IllegalStateException e) {
 				context.getSource().sendError(Text.of(e.getMessage()));
 				return 1;
+			} catch (CommandException e) {
+				throw e;
+			} catch (Throwable e) {
+				JacksoningServer.LOGGER.log(Level.ERROR, "'/" + context.getInput() + "' threw an exception", e);
+				if (Config.devMode()) {
+					context.getSource().sendError(Text.translatable("command.failed"));
+					context.getSource().sendError(Text.of(e.toString()));
+					return 1;
+				} else {
+					throw e;
+				}
 			}
 		};
 	}
@@ -58,10 +71,10 @@ public final class Commands {
 		var src = context.getSource();
 		src.sendMessage(Text.literal("Shop:"));
 		shop.levels().forEach(entry -> {
-			var item = entry.getKey();
-			var lvl = entry.getIntValue();
-			var msg = item.id() + "[level=" + lvl + "] ";
-			if (item.isUpgrade() && lvl >= item.maxLevel()) {
+			var item = entry.left();
+			var lvl = entry.rightInt();
+			var msg = item.id() + "[lvl=" + lvl + "] ";
+			if (item.isMaxLevel(lvl)) {
 				msg += "Sold out";
 			} else {
 				msg += item.name(lvl+1) + ": " + item.cost(lvl+1) + " groove";
@@ -71,11 +84,11 @@ public final class Commands {
 	}
 
 	private static ShopState getShop(CommandContext<ServerCommandSource> context) {
-		var gp = IGamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
-		if (!gp.game().state().isRunning()) throw new CommandException(Text.translatable("message.jacksoning.shop_not_running"));
-		if (!gp.data().isSpawned()) throw new CommandException(Text.translatable("message.jacksoning.shop_not_spawned"));
+		var gp = GamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
+		if (!gp.game().state().isRunning()) throw new CommandException(Text.translatable("message.jacksoning.shop.not_running"));
+		if (!gp.data().isSpawned()) throw new CommandException(Text.translatable("message.jacksoning.shop.not_spawned"));
 		var shop = gp.roleState().shop();
-		if (shop == null) throw new CommandException(Text.translatable("message.jacksoning.shop_cannot_use"));
+		if (shop == null) throw new CommandException(Text.translatable("message.jacksoning.shop.cannot_use"));
 		return shop;
 	}
 
@@ -116,10 +129,9 @@ public final class Commands {
 
 				@Override
 				public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-					return GenericContainerScreenHandler.createGeneric9x3(syncId, inv);
+					return new ShopScreenHandler(syncId, inv, shop);
 				}
 			});
-			sendShop(context, shop);
 			return 0;
 		})).then(literal("list").executes(catchingIllegalState(context -> {
 			var shop = getShop(context);
@@ -127,13 +139,13 @@ public final class Commands {
 			return 0;
 		}))).then(literal("buy").then(argument("item", StringArgumentType.word()).suggests((context, builder) -> {
 			var shop = getShop(context);
-			for (var id : shop.items().keySet()) {
-				builder.suggest(id);
+			for (var item : shop.shop().items) {
+				builder.suggest(item.id());
 			}
 			return builder.buildFuture();
 		}).executes(context -> {
 			var shop = getShop(context);
-			var gp = IGamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
+			var gp = GamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
 			var result = shop.purchase(gp, StringArgumentType.getString(context, "item"));
 			if (result != PurchaseResult.Success) {
 				context.getSource().sendError(result.text);
@@ -148,7 +160,7 @@ public final class Commands {
 												  var players = EntityArgumentType.getPlayers(context, "players");
 												  var role = context.getArgument("role", PlayerRole.class);
 												  for (var player : players) {
-													  var gp = IGamePlayer.cast(player);
+													  var gp = GamePlayer.cast(player);
 													  gp.setInitRole(role);
 												  }
 												  return 0;

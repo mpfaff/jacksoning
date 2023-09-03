@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning;
 
-import dev.pfaff.jacksoning.server.IGamePlayer;
+import dev.pfaff.jacksoning.server.GamePlayer;
 import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.util.codec.Codecs;
 import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
@@ -67,6 +67,6 @@ public enum PlayerRole implements StringIdentifiable {
 	}
 
 	public final boolean matches(ServerPlayerEntity p) {
-		return IGamePlayer.cast(p).data().role() == this;
+		return GamePlayer.cast(p).data().role() == this;
 	}
 }

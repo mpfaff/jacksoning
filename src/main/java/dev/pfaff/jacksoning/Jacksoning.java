@@ -5,7 +5,6 @@ import dev.pfaff.jacksoning.blocks.Blocks;
 import dev.pfaff.jacksoning.items.Items;
 import dev.pfaff.jacksoning.util.LogDestupify;
 import net.fabricmc.api.ModInitializer;
-import org.slf4j.Logger;
 
 public class Jacksoning implements ModInitializer {
 	public static final LogDestupify LOGGER = new LogDestupify(LogUtils.getLogger());

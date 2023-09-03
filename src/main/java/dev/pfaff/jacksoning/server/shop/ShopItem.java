@@ -1,7 +1,9 @@
 package dev.pfaff.jacksoning.server.shop;
 
-import dev.pfaff.jacksoning.server.IGamePlayer;
+import dev.pfaff.jacksoning.server.GamePlayer;
+import dev.pfaff.jacksoning.server.JacksoningServer;
 import net.minecraft.item.ItemStack;
+import org.slf4j.event.Level;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -9,11 +11,19 @@ import java.util.function.BiConsumer;
 public interface ShopItem {
 	String id();
 
-	boolean isUpgrade();
+	boolean isTiered();
 
 	int initialLevel();
 
 	int maxLevel();
+
+	default boolean isMaxLevel(int level) {
+		return maxLevel() != -1 && level >= maxLevel();
+	}
+
+	default boolean isOverMaxLevel(int level) {
+		return maxLevel() != -1 && level > maxLevel();
+	}
 
 	String name(int level);
 
@@ -23,9 +33,9 @@ public interface ShopItem {
 
 	int cost(int level);
 
-	public void onPurchase(IGamePlayer player, int level);
+	public void onPurchase(GamePlayer player, int level);
 
-	public void onTick(IGamePlayer player, int level);
+	public void onTick(GamePlayer player, int level);
 
 	public default ShopItem initialLevel(int level) {
 		var self = this;
@@ -36,8 +46,8 @@ public interface ShopItem {
 			}
 
 			@Override
-			public boolean isUpgrade() {
-				return self.isUpgrade();
+			public boolean isTiered() {
+				return self.isTiered();
 			}
 
 			@Override
@@ -71,18 +81,18 @@ public interface ShopItem {
 			}
 
 			@Override
-			public void onPurchase(IGamePlayer player, int level) {
+			public void onPurchase(GamePlayer player, int level) {
 				self.onPurchase(player, level);
 			}
 
 			@Override
-			public void onTick(IGamePlayer player, int level) {
+			public void onTick(GamePlayer player, int level) {
 				self.onTick(player, level);
 			}
 		};
 	}
 
-	public default ShopItem onTick(BiConsumer<IGamePlayer, Integer> onTick) {
+	public default ShopItem onTick(BiConsumer<GamePlayer, Integer> onTick) {
 		var self = this;
 		return new ShopItem() {
 			@Override
@@ -91,8 +101,8 @@ public interface ShopItem {
 			}
 
 			@Override
-			public boolean isUpgrade() {
-				return self.isUpgrade();
+			public boolean isTiered() {
+				return self.isTiered();
 			}
 
 			@Override
@@ -126,19 +136,19 @@ public interface ShopItem {
 			}
 
 			@Override
-			public void onPurchase(IGamePlayer player, int level) {
+			public void onPurchase(GamePlayer player, int level) {
 				self.onPurchase(player, level);
 			}
 
 			@Override
-			public void onTick(IGamePlayer player, int level) {
+			public void onTick(GamePlayer player, int level) {
 				self.onTick(player, level);
 				onTick.accept(player, level);
 			}
 		};
 	}
 
-	public default ShopItem onPurchase(BiConsumer<IGamePlayer, Integer> onPurchase) {
+	public default ShopItem onPurchase(BiConsumer<GamePlayer, Integer> onPurchase) {
 		var self = this;
 		return new ShopItem() {
 			@Override
@@ -147,8 +157,8 @@ public interface ShopItem {
 			}
 
 			@Override
-			public boolean isUpgrade() {
-				return self.isUpgrade();
+			public boolean isTiered() {
+				return self.isTiered();
 			}
 
 			@Override
@@ -182,13 +192,13 @@ public interface ShopItem {
 			}
 
 			@Override
-			public void onPurchase(IGamePlayer player, int level) {
+			public void onPurchase(GamePlayer player, int level) {
 				self.onPurchase(player, level);
 				onPurchase.accept(player, level);
 			}
 
 			@Override
-			public void onTick(IGamePlayer player, int level) {
+			public void onTick(GamePlayer player, int level) {
 				self.onTick(player, level);
 			}
 		};
@@ -202,7 +212,7 @@ public interface ShopItem {
 			}
 
 			@Override
-			public boolean isUpgrade() {
+			public boolean isTiered() {
 				return true;
 			}
 
@@ -237,22 +247,23 @@ public interface ShopItem {
 			}
 
 			@Override
-			public void onPurchase(IGamePlayer player, int level) {
+			public void onPurchase(GamePlayer player, int level) {
 				assert level <= maxLevel();
 			}
 
 			@Override
-			public void onTick(IGamePlayer player, int level) {
+			public void onTick(GamePlayer player, int level) {
 				assert level <= maxLevel();
 			}
 		};
 	}
 
 	public static ShopItem consumable(String id,
-									 String name,
-									 ItemStack icon,
-									 List<String> lore,
-									 int cost) {
+									  String name,
+									  ItemStack icon,
+									  List<String> lore,
+									  int cost,
+									  int maxUses) {
 		return new ShopItem() {
 			@Override
 			public String id() {
@@ -260,7 +271,7 @@ public interface ShopItem {
 			}
 
 			@Override
-			public boolean isUpgrade() {
+			public boolean isTiered() {
 				return false;
 			}
 
@@ -271,7 +282,7 @@ public interface ShopItem {
 
 			@Override
 			public int maxLevel() {
-				return 1;
+				return maxUses;
 			}
 
 			@Override
@@ -295,13 +306,11 @@ public interface ShopItem {
 			}
 
 			@Override
-			public void onPurchase(IGamePlayer player, int level) {
-				assert level == 0 || level == 1;
+			public void onPurchase(GamePlayer player, int level) {
 			}
 
 			@Override
-			public void onTick(IGamePlayer player, int level) {
-				assert level == 0 || level == 1;
+			public void onTick(GamePlayer player, int level) {
 			}
 		};
 	}

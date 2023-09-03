@@ -107,7 +107,7 @@ public final class GameState {
 		int jacksonCount = 0;
 		int unLeaderCount = 0;
 		for (var p : IGame.cast(server).players()) {
-			var gp = IGamePlayer.cast(p);
+			var gp = GamePlayer.cast(p);
 
 			// reset the role state for the new game
 			gp.setRole(gp.data().role());
@@ -137,7 +137,7 @@ public final class GameState {
 		server.getOverworld().setTimeOfDay(8000);
 		for (var p : IGame.cast(server).players()) {
 			// TODO: https://git.pfaff.dev/michael/jacksoning/issues/8
-			var gp = IGamePlayer.cast(p);
+			var gp = GamePlayer.cast(p);
 			gp.respawnPlayer(gp.data().role() == PlayerRole.Jackson ? jacksonSpawnDelay() : 0);
 			gp.giveKit();
 		}
@@ -179,9 +179,9 @@ public final class GameState {
 				int giftGroove = targetGrooveGifts - grooveGifts();
 
 				server.getPlayerManager().getPlayerList().forEach(p -> {
-					var role = IGamePlayer.cast(p).data().role();
+					var role = GamePlayer.cast(p).data().role();
 					if (role == PlayerRole.Jackson || role == PlayerRole.Mistress) {
-						if (IGamePlayer.cast(p).data().isSpawned()) {
+						if (GamePlayer.cast(p).data().isSpawned()) {
 							p.giveItemStack(new ItemStack(Items.GROOVE, economy() * giftGroove));
 						}
 					}
@@ -202,7 +202,7 @@ public final class GameState {
 		});
 		this.stop(server);
 		server.getPlayerManager().getPlayerList().forEach(p -> {
-			var gp = IGamePlayer.cast(p);
+			var gp = GamePlayer.cast(p);
 			switch (gp.data().role()) {
 				case Mistress -> gp.setRole(PlayerRole.UNLeader);
 				default -> {

@@ -11,7 +11,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 import static dev.pfaff.jacksoning.Constants.LABEL_ROLE;
-import static dev.pfaff.jacksoning.Constants.MESSAGE_ECONOMY_NUMBER_STYLE;
+import static dev.pfaff.jacksoning.Constants.GROOVE_VALUE_STYLE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GROOVE_DROP_NUMBER_STYLE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_FALSE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_TRUE;
@@ -28,7 +28,7 @@ public final class ServerSidebar {
 	private final DiffingComputerList<Void> lineDiffer = new DiffingComputerList<>();
 
 	public void tick(ServerPlayerEntity p) {
-		var gp = IGamePlayer.cast(p);
+		var gp = GamePlayer.cast(p);
 		var buf = PacketByteBufs.create();
 
 		// write a placeholder line count
@@ -71,7 +71,7 @@ public final class ServerSidebar {
 							setLine(i,
 									Text.literal("Economy: ")
 										.append(Text.literal(String.valueOf(a))
-													.setStyle(MESSAGE_ECONOMY_NUMBER_STYLE))).writePacket(ctx);
+													.setStyle(GROOVE_VALUE_STYLE))).writePacket(ctx);
 							return null;
 						}, buf);
 

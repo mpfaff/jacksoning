@@ -4,6 +4,7 @@ import dev.pfaff.jacksoning.util.codec.Codec;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.codec.FromR;
 import net.minecraft.nbt.*;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,6 +91,8 @@ public final class NbtCodecs {
 	public static Codec<long[], NbtElement> NBT_LONG_ARRAY = by(LONG_ARRAY,
 																t -> MinecraftNbtWrapper.of(new NbtLongArray(t)),
 																NbtElement::asLongArray);
+	public static Codec<Text, NbtElement> NBT_TEXT = NBT_STRING.then(Codec.by(Text.Serializer::toJson,
+																			  Text.Serializer::fromJson));
 	public static Codec<List<BlockPos>, NbtElement> NBT_FLAT_BLOCK_POS_LIST = NBT_INT_ARRAY.then(Codec.by(l -> {
 		var flat = new int[l.size() * 3];
 		for (int i = 0; i < l.size(); i++) {

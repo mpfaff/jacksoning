@@ -15,6 +15,7 @@ public final class Constants {
 	public static final Identifier TYPE_PLAYER_ROLE = new Identifier("jacksoning", "player_role");
 	public static final Identifier ITEM_GROOVE = new Identifier("jacksoning", "groove");
 	public static final Identifier BLOCK_SELF_DESTRUCT_BUTTON = new Identifier("jacksoning", "self_destruct_button");
+	public static final Identifier ENCHANTMENT_DUMMY = new Identifier("jacksoning", "dummy");
 
 	public static final Text LABEL_ROLE = Text.translatable("label.jacksoning.role").append(": ");
 	public static final Text MESSAGE_GAME_OVER_JACKSON_WON = Text.translatable("message.jacksoning.game_over.jackson_won");
@@ -22,7 +23,7 @@ public final class Constants {
 	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_TRUE = Text.translatable("message.jacksoning.inside_jackson_zone.true");
 	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_FALSE = Text.translatable("message.jacksoning.inside_jackson_zone.false");
 
-	public static final Style MESSAGE_ECONOMY_NUMBER_STYLE = Style.EMPTY.withColor(Formatting.GREEN);
+	public static final Style GROOVE_VALUE_STYLE = Style.EMPTY.withColor(Formatting.GREEN);
 	public static final Style MESSAGE_GROOVE_DROP_NUMBER_STYLE = Style.EMPTY.withColor(Formatting.YELLOW);
 
 	public static final String PERSISTENT_STATE_ID = "jacksoning";
@@ -32,8 +33,11 @@ public final class Constants {
 																			EntityAttributes.GENERIC_ATTACK_DAMAGE,
 																			EntityAttributes.GENERIC_ARMOR);
 	public static final String MODIFIER_GROUP = "jacksoning";
-	public static final UUID MODIFIER_JACKSON_MAX_HEALTH_BUF = UUID.fromString("62a0f540-0883-4b78-8271-80ef2a4f6365");
-	public static final UUID MODIFIER_UN_LEADER_ATTACK_DAMAGE_DEBUF = UUID.fromString("62a0f540-0883-4b78-8271-80ef2a4f6365");
+	public static final UUID MODIFIER_JACKSON_MAX_HEALTH = UUID.fromString("62a0f540-0883-4b78-8271-80ef2a4f6365");
+	public static final UUID MODIFIER_UN_LEADER_ATTACK_DAMAGE = UUID.fromString("0e33963f-5373-48e2-936a-f0fdc01d90b4");
+	public static final UUID MODIFIER_UPGRADE_MAX_HEALTH = UUID.fromString("6e71dbf1-d60c-41cd-b231-d39fdbec0603");
+	public static final UUID MODIFIER_UPGRADE_SPEED = UUID.fromString("ba56f216-4447-4c7c-8645-4f5ebb805f15");
+	public static final UUID MODIFIER_UPGRADE_ATTACK_DAMAGE = UUID.fromString("7aec52ea-6980-4a8c-aa43-1074e7244b11");
 
 	public static final Identifier ITEM_COBBLE_TURRET = new Identifier("k_turrets:cobble_turret_item");
 }

@@ -1,48 +1,48 @@
 package dev.pfaff.jacksoning.server.shop;
 
 import dev.pfaff.jacksoning.items.Items;
-import dev.pfaff.jacksoning.server.IGamePlayer;
+import dev.pfaff.jacksoning.server.GamePlayer;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
-import java.util.Map;
 import java.util.stream.Stream;
 
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 
 public final class ShopState implements Container {
-	private final Map<String, ShopItem> shopItems;
+	private final Shop shop;
 	private final Object2IntMap<String> levels = new Object2IntOpenHashMap<>();
 
-	public ShopState(Map<String, ShopItem> shopItems) {
-		this.shopItems = shopItems;
+	public ShopState(Shop shop) {
+		this.shop = shop;
 	}
 
-	public Map<String, ShopItem> items() {
-		return shopItems;
+	public Shop shop() {
+		return shop;
 	}
 
 	public int getLevel(ShopItem item) {
 		return Math.max(levels.getOrDefault(item.id(), 0), item.initialLevel());
 	}
 
-	public Stream<Object2IntMap.Entry<ShopItem>> levels() {
+	public Stream<ObjectIntImmutablePair<ShopItem>> levels() {
 		// intellij is truly the state of the art when it comes to code formatting.
-		return shopItems.values().stream().map(item -> new AbstractObject2IntMap.BasicEntry<>(item, getLevel(item)));
+		return shop.items.stream().map(item -> new ObjectIntImmutablePair<>(item, getLevel(item)));
 	}
 
-	public PurchaseResult purchase(IGamePlayer player, String id) {
-		var item = shopItems.get(id);
+	public PurchaseResult purchase(GamePlayer player, String id) {
+		var item = shop.byId.get(id);
 		if (item == null) return PurchaseResult.NoSuchItem;
 		int lvl = getLevel(item);
-		if (lvl >= item.maxLevel()) return PurchaseResult.MaxLevel;
+		if (item.isMaxLevel(lvl)) return PurchaseResult.MaxLevel;
 		int cost = item.cost(lvl+1);
 		var inv = player.asMc().getInventory();
 		int availableGroove = inv.count(Items.GROOVE);
@@ -52,9 +52,7 @@ public final class ShopState implements Container {
 		if (!removeNItem(inv, Items.GROOVE, cost)) {
 			return PurchaseResult.Inconsistency;
 		}
-		if (item.isUpgrade()) {
-			levels.put(id, lvl+1);
-		}
+		levels.put(id, lvl+1);
 		item.onPurchase(player, lvl+1);
 		return PurchaseResult.Success;
 	}
