@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "jacksoning",
   "version": "${version}",
-  "name": "jacksoning",
+  "name": "The Jacksoning",
   "description": "",
   "authors": [
-    "MichaeL Pfaff <michael@pfaff.dev>"
+    "Michael Pfaff <michael@pfaff.dev>"
   ],
   "contact": {},
   "license": "AGPL-3.0",

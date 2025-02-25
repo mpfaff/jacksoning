@@ -1,7 +1,6 @@
 package dev.pfaff.jacksoning.mixin;
 
 import dev.pfaff.jacksoning.PlayerRole;
-import dev.pfaff.jacksoning.server.GamePlayer;
 import dev.pfaff.jacksoning.server.IGamePlayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.IllagerEntity;
@@ -16,8 +15,8 @@ public abstract class MixinPillagerEntity extends IllagerEntity {
 	}
 
 	@Override
-	public boolean isTeammate(Entity other) {
-		return super.isTeammate(other) || (other instanceof IGamePlayer gp && gp.gamePlayer()
+	public boolean isInSameTeam(Entity other) {
+		return super.isInSameTeam(other) || (other instanceof IGamePlayer gp && gp.gamePlayer()
 																				.data()
 																				.role() == PlayerRole.UNLeader);
 	}

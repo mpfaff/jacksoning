@@ -1,14 +1,11 @@
 package dev.pfaff.jacksoning.items;
 
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Rarity;
 
 public final class GrooveItem extends Item {
-	public GrooveItem() {
-		super(new FabricItemSettings().rarity(Rarity.EPIC).group(ItemGroup.MATERIALS));
+	public GrooveItem(Settings settings) {
+		super(settings);
 	}
 
 	@Override

@@ -1,10 +1,6 @@
 package dev.pfaff.jacksoning.util;
 
-import dev.pfaff.jacksoning.Jacksoning;
-import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.text.Text;
-import org.slf4j.event.Level;
 
 import java.nio.charset.StandardCharsets;
 
@@ -15,10 +11,7 @@ import java.nio.charset.StandardCharsets;
  * ASCII characters.
  */
 public final class NetworkUtil {
-	public static final int TEXT_REPR_STRING = 0;
-	public static final int TEXT_REPR_TEXT = 1;
-
-	public static void writeTextUntagged(PacketByteBuf buf, String string) {
+	public static void writeStringWithTruncation(PacketByteBuf buf, String string) {
 		byte[] bs = string.getBytes(StandardCharsets.US_ASCII);
 		if (bs.length > 255) {
 			bs[253] = '.';
@@ -30,38 +23,10 @@ public final class NetworkUtil {
 		buf.writeBytes(bs, 0, l);
 	}
 
-	public static void writeText(PacketByteBuf buf, String string) {
-		buf.writeByte(TEXT_REPR_STRING);
-		writeTextUntagged(buf, string);
-	}
-
-	public static void writeTextUntagged(PacketByteBuf buf, Text text) {
-		buf.writeText(text);
-	}
-
-	public static void writeText(PacketByteBuf buf, Text text) {
-		buf.writeByte(TEXT_REPR_TEXT);
-		writeTextUntagged(buf, text);
-	}
-
-	public static String readTextReprString(PacketByteBuf buf) {
+	public static String readString(PacketByteBuf buf) {
 		int l = buf.readUnsignedByte();
 		var s = buf.toString(buf.readerIndex(), l, StandardCharsets.US_ASCII);
 		buf.readerIndex(buf.readerIndex() + l);
 		return s;
-	}
-
-	public static Text readTextReprText(PacketByteBuf buf) {
-		return buf.readText();
-	}
-
-	public static StringOrText readText(PacketByteBuf buf) {
-		byte tag = buf.readByte();
-		Jacksoning.LOGGER.log(Level.DEBUG, () -> "Received a type:" + tag + " text");
-		return switch (tag) {
-			case TEXT_REPR_STRING -> StringOrText.of(readTextReprString(buf));
-			case TEXT_REPR_TEXT -> StringOrText.of(readTextReprText(buf));
-			default -> throw new DecoderException("Unrecognized string or text type: " + tag);
-		};
 	}
 }

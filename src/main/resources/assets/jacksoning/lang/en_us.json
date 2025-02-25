@@ -22,5 +22,8 @@
   "message.jacksoning.shop.purchase_result.must_purchase_lower": "You must purchase the lower tier first.",
   "message.jacksoning.shop.purchase_result.already_purchased": "Already purchased.",
   "message.jacksoning.shop.not_running": "The game must be active to use the shop.",
-  "message.jacksoning.shop.not_spawned": "You must be spawned in to use the shop."
+  "message.jacksoning.shop.not_spawned": "You must be spawned in to use the shop.",
+  "refereePanel.title": "Referee Panel",
+  "key.jacksoning.referee": "Open Referee Panel",
+  "category.jacksoning": "The Jacksoning"
 }

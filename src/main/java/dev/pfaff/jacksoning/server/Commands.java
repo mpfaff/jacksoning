@@ -6,13 +6,14 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.server.shop.PurchaseResult;
 import dev.pfaff.jacksoning.server.shop.ShopScreenHandler;
 import dev.pfaff.jacksoning.server.shop.ShopState;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
-import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
@@ -27,6 +28,7 @@ import org.slf4j.event.Level;
 
 import java.util.Objects;
 
+import static dev.pfaff.jacksoning.Constants.MOD_ID;
 import static dev.pfaff.jacksoning.Constants.TYPE_PLAYER_ROLE;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -52,7 +54,7 @@ public final class Commands {
 			} catch (IllegalStateException e) {
 				context.getSource().sendError(Text.of(e.getMessage()));
 				return 1;
-			} catch (CommandException e) {
+			} catch (CommandSyntaxException e) {
 				throw e;
 			} catch (Throwable e) {
 				JacksoningServer.LOGGER.log(Level.ERROR, "'/" + context.getInput() + "' threw an exception", e);
@@ -83,19 +85,19 @@ public final class Commands {
 		});
 	}
 
-	private static ShopState getShop(CommandContext<ServerCommandSource> context) {
+	private static ShopState getShop(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
 		var gp = GamePlayer.cast(Objects.requireNonNull(context.getSource().getPlayer()));
-		if (!gp.game().state().isRunning()) throw new CommandException(Text.translatable("message.jacksoning.shop.not_running"));
-		if (!gp.data().isSpawned()) throw new CommandException(Text.translatable("message.jacksoning.shop.not_spawned"));
+		if (!gp.game().state().isRunning()) throw new SimpleCommandExceptionType(Text.translatable("message.jacksoning.shop.not_running")).create();
+		if (!gp.data().isSpawned()) throw new SimpleCommandExceptionType(Text.translatable("message.jacksoning.shop.not_spawned")).create();
 		var shop = gp.roleState().shop();
-		if (shop == null) throw new CommandException(Text.translatable("message.jacksoning.shop.cannot_use"));
+		if (shop == null) throw new SimpleCommandExceptionType(Text.translatable("message.jacksoning.shop.cannot_use")).create();
 		return shop;
 	}
 
 	public static void register(CommandDispatcher<ServerCommandSource> dispatcher,
 								CommandRegistryAccess registryAccess,
 								CommandManager.RegistrationEnvironment environment) {
-		dispatcher.register(literal("jacksoning").then(literal("start").executes(catchingIllegalState(context -> {
+		dispatcher.register(literal(MOD_ID).then(literal("start").executes(catchingIllegalState(context -> {
 			IGame.cast(context.getSource().getServer()).state().start(context.getSource().getServer());
 			return 0;
 		}))).then(literal("stop").executes(catchingIllegalState(context -> {

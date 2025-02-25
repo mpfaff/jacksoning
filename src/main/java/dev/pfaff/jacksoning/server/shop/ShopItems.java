@@ -1,27 +1,25 @@
 package dev.pfaff.jacksoning.server.shop;
 
-import dev.pfaff.jacksoning.server.JacksoningServer;
+import dev.pfaff.jacksoning.server.GamePlayer;
 import it.unimi.dsi.fastutil.ints.Int2DoubleFunction;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.PotionContentsComponent;
+import net.minecraft.component.type.UnbreakableComponent;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtByte;
-import net.minecraft.potion.PotionUtil;
 import net.minecraft.potion.Potions;
-import org.slf4j.event.Level;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.util.Identifier;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.IntToDoubleFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static dev.pfaff.jacksoning.Constants.MODIFIER_UPGRADE_ATTACK_DAMAGE;
@@ -30,33 +28,45 @@ import static dev.pfaff.jacksoning.Constants.MODIFIER_UPGRADE_SPEED;
 import static dev.pfaff.jacksoning.server.shop.ShopItem.consumable;
 import static dev.pfaff.jacksoning.server.shop.ShopItem.upgrade;
 import static dev.pfaff.jacksoning.util.StreamUtil.intsWithIndex;
-import static dev.pfaff.jacksoning.util.StreamUtil.withIndex;
 
 public final class ShopItems {
-	private static final List<ItemStack> ARMOR = Stream.of(Items.LEATHER_HELMET,
-														   Items.LEATHER_CHESTPLATE,
-														   Items.LEATHER_LEGGINGS,
-														   Items.LEATHER_BOOTS,
+	private static final List<Function<GamePlayer, ItemStack>> ARMOR =
+		Stream.of(
+				  Items.LEATHER_HELMET,
+				  Items.LEATHER_CHESTPLATE,
+				  Items.LEATHER_LEGGINGS,
+				  Items.LEATHER_BOOTS,
 
-														   Items.GOLDEN_HELMET,
-														   Items.GOLDEN_CHESTPLATE,
-														   Items.GOLDEN_LEGGINGS,
-														   Items.GOLDEN_BOOTS,
+				  Items.GOLDEN_HELMET,
+				  Items.GOLDEN_CHESTPLATE,
+				  Items.GOLDEN_LEGGINGS,
+				  Items.GOLDEN_BOOTS,
 
-														   Items.IRON_HELMET,
-														   Items.IRON_CHESTPLATE,
-														   Items.IRON_LEGGINGS,
-														   Items.IRON_BOOTS,
+				  Items.IRON_HELMET,
+				  Items.IRON_CHESTPLATE,
+				  Items.IRON_LEGGINGS,
+				  Items.IRON_BOOTS,
 
-														   Items.DIAMOND_HELMET,
-														   Items.DIAMOND_CHESTPLATE,
-														   Items.DIAMOND_LEGGINGS,
-														   Items.DIAMOND_BOOTS)
-													   .map(ItemStack::new)
-													   .peek(ShopItems::setUnbreakable)
-													   .peek(stack -> stack.addEnchantment(Enchantments.BINDING_CURSE,
-																						   1))
-													   .toList();
+				  Items.DIAMOND_HELMET,
+				  Items.DIAMOND_CHESTPLATE,
+				  Items.DIAMOND_LEGGINGS,
+				  Items.DIAMOND_BOOTS)
+			  .map(ItemStack::new)
+			  .peek(ShopItems::setUnbreakable)
+			  .map(stackBase -> (Function<GamePlayer, ItemStack>) p -> {
+				  var stack = stackBase.copy();
+				  stack.addEnchantment(p.asMc()
+										.getWorld()
+										.getRegistryManager()
+										.getOptional(
+											RegistryKeys.ENCHANTMENT)
+										.get()
+										.getEntry(
+											Enchantments.BINDING_CURSE.getValue())
+										.get(), 1);
+				  return stack;
+			  })
+			  .toList();
 	private static final List<ItemStack> TOOLS = Stream.of(Items.WOODEN_SWORD,
 														   Items.WOODEN_AXE,
 														   Items.WOODEN_PICKAXE,
@@ -85,7 +95,7 @@ public final class ShopItems {
 	private static final int TOOL_LEVELS = TOOLS.size() / TOOL_TYPES;
 
 	private static ItemStack setUnbreakable(ItemStack stack) {
-		stack.setSubNbt("Unbreakable", NbtByte.of(true));
+		stack.set(DataComponentTypes.UNBREAKABLE, new UnbreakableComponent(true));
 		return stack;
 	}
 
@@ -99,7 +109,7 @@ public final class ShopItems {
 			l -= 1;
 			var armor = p.asMc().getInventory().armor;
 			for (int i = 0; i < 4; i++) {
-				armor.set(3 - i, ARMOR.get(l * ARMOR_LEVELS + i).copy());
+				armor.set(3 - i, ARMOR.get(l * ARMOR_LEVELS + i).apply(p).copy());
 			}
 		});
 	}
@@ -123,8 +133,8 @@ public final class ShopItems {
 										ItemStack icon,
 										IntFunction<List<String>> lore,
 										List<Integer> costs,
-										EntityAttribute attribute,
-										UUID modifierId,
+										RegistryEntry<EntityAttribute> attribute,
+										Identifier modifierId,
 										IntToDoubleFunction value,
 										EntityAttributeModifier.Operation operation) {
 		return upgrade(id,
@@ -159,8 +169,8 @@ public final class ShopItems {
 										ItemStack icon,
 										IntFunction<List<String>> lore,
 										List<Integer> costs,
-										EntityAttribute attribute,
-										UUID modifierId,
+										RegistryEntry<EntityAttribute> attribute,
+										Identifier modifierId,
 										Int2DoubleFunction value,
 										EntityAttributeModifier.Operation operation) {
 		return statUpgrade(id,
@@ -180,16 +190,16 @@ public final class ShopItems {
 
 	private static ShopItem strengthUpgrade(List<Integer> costs) {
 		var icon = new ItemStack(Items.POTION);
-		PotionUtil.setPotion(icon, Potions.STRENGTH);
+		icon.set(DataComponentTypes.POTION_CONTENTS, new PotionContentsComponent(Potions.STRENGTH));
 		return statUpgrade("strength",
 						   "Strength",
 						   icon,
 						   i -> List.of(),
 						   costs,
-						   EntityAttributes.GENERIC_ATTACK_DAMAGE,
+						   EntityAttributes.ATTACK_DAMAGE,
 						   MODIFIER_UPGRADE_ATTACK_DAMAGE,
 						   funcByList(List.of(0.0, 3.0, 6.0)),
-						   EntityAttributeModifier.Operation.ADDITION);
+						   EntityAttributeModifier.Operation.ADD_VALUE);
 	}
 
 	private static ShopItem speedUpgrade(List<Integer> costs) {
@@ -198,10 +208,10 @@ public final class ShopItems {
 						   new ItemStack(Items.FEATHER),
 						   i -> List.of(),
 						   costs,
-						   EntityAttributes.GENERIC_MOVEMENT_SPEED,
+						   EntityAttributes.MOVEMENT_SPEED,
 						   MODIFIER_UPGRADE_SPEED,
 						   funcByList(List.of(0.0, 0.2, 0.4)),
-						   EntityAttributeModifier.Operation.MULTIPLY_TOTAL);
+						   EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	}
 
 	private static ShopItem healthUpgrade(List<Integer> costs) {
@@ -210,10 +220,10 @@ public final class ShopItems {
 						   new ItemStack(Items.GOLDEN_APPLE),
 						   i -> List.of(),
 						   costs,
-						   EntityAttributes.GENERIC_MAX_HEALTH,
+						   EntityAttributes.MAX_HEALTH,
 						   MODIFIER_UPGRADE_MAX_HEALTH,
 						   funcByList(List.of(0.0, 20.0 * 3)),
-						   EntityAttributeModifier.Operation.ADDITION);
+						   EntityAttributeModifier.Operation.ADD_VALUE);
 	}
 
 	private static ShopItem giveItem(String id, String name, ItemStack item, List<String> lore, int cost, int maxUses) {

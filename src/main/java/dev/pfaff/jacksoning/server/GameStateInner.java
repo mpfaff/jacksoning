@@ -6,6 +6,7 @@ import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.world.PersistentState;
 
 import java.lang.invoke.MethodHandles;
@@ -38,7 +39,10 @@ public final class GameStateInner implements Container {
 
 	public final PersistentState persistentState = new PersistentState() {
 		@Override
-		public net.minecraft.nbt.NbtCompound writeNbt(net.minecraft.nbt.NbtCompound nbt) {
+		public net.minecraft.nbt.NbtCompound writeNbt(
+			net.minecraft.nbt.NbtCompound nbt,
+			RegistryWrapper.WrapperLookup registries
+		) {
 			GameStateInner.this.writeNbt(NbtElement.of(nbt));
 			return nbt;
 		}

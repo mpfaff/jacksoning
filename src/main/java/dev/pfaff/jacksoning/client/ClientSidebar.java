@@ -1,36 +1,38 @@
 package dev.pfaff.jacksoning.client;
 
+import dev.pfaff.jacksoning.packet.UpdateUIPacket;
 import dev.pfaff.jacksoning.sidebar.Alignment;
 import dev.pfaff.jacksoning.sidebar.SidebarCommand;
 import dev.pfaff.jacksoning.util.OpenArrayList;
 import dev.pfaff.jacksoning.util.StringOrText;
+import dev.pfaff.jacksoning.util.gui.GuiGlobals;
 import io.netty.util.internal.EmptyArrays;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.RenderTickCounter;
 import org.slf4j.event.Level;
 
 import java.util.Arrays;
+
+import static dev.pfaff.jacksoning.util.gui.GuiGlobals.mcWindow;
 
 public final class ClientSidebar {
 	private static final OpenArrayList<StringOrText> lines = OpenArrayList.wrap(StringOrText.EMPTY_ARRAY);
 	private static Alignment[] alignments = Alignment.EMPTY_ARRAY;
 	private static int[] widthBuffer = EmptyArrays.EMPTY_INTS;
+//	private static final BitSet dirty = new BitSet();
 
-	private static final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+	private static final TextRenderer textRenderer = GuiGlobals.textRenderer;
 
 	private static final EdgeInsets padding = EdgeInsets.symmetrical(4, 2);
 	private static final EdgeInsets margin = EdgeInsets.symmetrical(4, 2);
 
-	public static void render(MatrixStack matrixStack, float tickDelta) {
+	public static void render(DrawContext context, RenderTickCounter tickCounter) {
 		var lines = ClientSidebar.lines;
 		var l = lines.size();
 		var linesArray = lines.a();
 		var alignments = ClientSidebar.alignments;
 		var widthBuffer = ClientSidebar.widthBuffer;
-		var client = MinecraftClient.getInstance();
 		int maxWidth = 0;
 		for (var i = 0; i < l; i++) {
 			var line = linesArray[i];
@@ -42,15 +44,14 @@ public final class ClientSidebar {
 			maxWidth = Math.max(maxWidth, width);
 		}
 		int fontHeight = textRenderer.fontHeight;
-		int endX = client.getWindow().getScaledWidth() - margin.right();
+		int endX = mcWindow.getScaledWidth() - margin.right();
 		int startX = endX - maxWidth - padding.horizontal();
-		int y = client.getWindow().getScaledHeight() / 2 - lines.size() * fontHeight / 2;
-		DrawableHelper.fill(matrixStack,
-							startX,
-							y - padding.top(),
-							endX,
-							y + lines.size() * fontHeight + padding.bottom(),
-							0x90_505050);
+		int y = mcWindow.getScaledHeight() / 2 - lines.size() * fontHeight / 2;
+		context.fill(startX,
+					 y - padding.top(),
+					 endX,
+					 y + lines.size() * fontHeight + padding.bottom(),
+					 GuiGlobals.GENERIC_HUD_BACKGROUND);
 		int paddedX = startX + padding.left();
 		for (var i = 0; i < l; i++) {
 			var line = linesArray[i];
@@ -68,31 +69,31 @@ public final class ClientSidebar {
 				//};
 				//x += maxWidth >>> shift - widthBuffer[i] >>> shift;
 				switch (align) {
-					case Center -> x += maxWidth / 2 - widthBuffer[i] / 2;
-					case Right -> x += maxWidth - widthBuffer[i];
+					case Middle -> x += maxWidth / 2 - widthBuffer[i] / 2;
+					case End -> x += maxWidth - widthBuffer[i];
 				}
 			}
 			if (line.string() != null) {
-				textRenderer.draw(matrixStack, line.string(), x, y, 0xE0E0E0);
+				context.drawText(textRenderer, line.string(), x, y, 0xE0E0E0, false);
 			} else {
-				textRenderer.draw(matrixStack, line.text(), x, y, 0xE0E0E0);
+				context.drawText(textRenderer, line.text(), x, y, 0xE0E0E0, false);
 			}
 			y += fontHeight;
 		}
 	}
 
-	public static void handleUpdate(PacketByteBuf buf) {
+	public static void handleUpdate(UpdateUIPacket packet) {
 		final var lines = ClientSidebar.lines;
 		var len = lines.size();
 		var linesArray = lines.a();
-		while (buf.isReadable()) {
-			var command = SidebarCommand.fromPacket(buf);
+		for (var command : packet.commands()) {
 			JacksoningClient.LOGGER.log(Level.DEBUG, () -> "Received sidebar command: " + command);
 			switch (command) {
 				case SidebarCommand.Truncate cmd -> {
 					var newLinesArray = lines.ensureCapacityAndReturnArray(len = cmd.length());
 					//noinspection ArrayEquality
 					if (newLinesArray != linesArray) {
+//						dirty.set(newLinesArray.length);
 						linesArray = newLinesArray;
 						alignments = Arrays.copyOf(alignments, linesArray.length);
 						widthBuffer = new int[linesArray.length];
@@ -100,7 +101,8 @@ public final class ClientSidebar {
 				}
 				case SidebarCommand.SetLine cmd -> {
 					linesArray[cmd.index()] = cmd.text();
-					alignments[cmd.index()] = cmd.alignment() != Alignment.Left ? cmd.alignment() : null;
+					alignments[cmd.index()] = cmd.alignment() != Alignment.Start ? cmd.alignment() : null;
+//					dirty.set(cmd.index());
 				}
 			}
 		}

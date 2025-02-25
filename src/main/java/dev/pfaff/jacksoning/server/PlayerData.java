@@ -9,11 +9,12 @@ import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
+import static dev.pfaff.jacksoning.Constants.MOD_ID;
 import static dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper.containerField;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 
 public final class PlayerData implements Container {
-	public static final String PLAYER_NBT_KEY = "jacksoning";
+	public static final String PLAYER_NBT_KEY = MOD_ID;
 
 	public static final int RESPAWN_TIME_SPAWNED = -1;
 

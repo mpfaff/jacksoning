@@ -1,10 +1,17 @@
 package dev.pfaff.jacksoning.util.nbt;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import dev.pfaff.jacksoning.util.codec.Codec;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.codec.FromR;
 import net.minecraft.nbt.*;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +22,8 @@ import java.util.function.Function;
 import static dev.pfaff.jacksoning.util.nbt.NbtType.*;
 
 public final class NbtCodecs {
+	private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
+
 	public static <T> Codec<T, NbtElement> by(Function<T, @NotNull NbtElement> toElement,
 											  FromR<T, @NotNull NbtElement> fromElement) {
 		var nullMsg = "Expected an NBT value, found null";
@@ -91,8 +100,14 @@ public final class NbtCodecs {
 	public static Codec<long[], NbtElement> NBT_LONG_ARRAY = by(LONG_ARRAY,
 																t -> MinecraftNbtWrapper.of(new NbtLongArray(t)),
 																NbtElement::asLongArray);
-	public static Codec<Text, NbtElement> NBT_TEXT = NBT_STRING.then(Codec.by(Text.Serializer::toJson,
-																			  Text.Serializer::fromJson));
+	public static Codec<JsonElement, NbtElement> NBT_JSON = NBT_STRING.then(Codec.by(GSON::toJson, JsonParser::parseString));
+	public static Codec<Text, NbtElement> NBT_TEXT = NBT_JSON.then(Codec.by(
+		text -> TextCodecs.CODEC.encodeStart(JsonOps.INSTANCE, text).getOrThrow(JsonParseException::new),
+		json -> json == null
+				? null
+				: TextCodecs.CODEC.parse(JsonOps.INSTANCE, json)
+								  .getOrThrow(JsonParseException::new)
+	));
 	public static Codec<List<BlockPos>, NbtElement> NBT_FLAT_BLOCK_POS_LIST = NBT_INT_ARRAY.then(Codec.by(l -> {
 		var flat = new int[l.size() * 3];
 		for (int i = 0; i < l.size(); i++) {

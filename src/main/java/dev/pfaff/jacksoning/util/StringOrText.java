@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning.util;
 
-import net.minecraft.text.LiteralTextContent;
+import net.minecraft.text.PlainTextContent;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,21 +15,24 @@ public record StringOrText(@Nullable String string, @Nullable Text text) {
 
 	public StringOrText {
 		if (string == null && text == null) throw new NullPointerException();
-		assert text == null || !isLiteral(text) : "You used the internal constructor, didn't you?";
+		assert text == null || asLiteral(text) == null : "You used the internal constructor, didn't you?";
 	}
 
 	public static StringOrText of(@NotNull String string) {
 		return new StringOrText(Objects.requireNonNull(string), null);
 	}
 
-	public static boolean isLiteral(@NotNull Text text) {
-		return text.getContent() instanceof LiteralTextContent && text.getStyle().isEmpty() && text.getSiblings().isEmpty();
+	public static @Nullable String asLiteral(@NotNull Text text) {
+		if (text.getContent() instanceof PlainTextContent.Literal(String string) && text.getStyle().isEmpty() && text.getSiblings().isEmpty()) {
+			return string;
+		} else {
+			return null;
+		}
 	}
 
 	public static StringOrText of(@NotNull Text text) {
-		if (isLiteral(text)) {
-			return of(((LiteralTextContent) text.getContent()).string());
-		}
+		var s = asLiteral(text);
+		if (s != null) return of(s);
 		return new StringOrText(null, Objects.requireNonNull(text));
 	}
 }

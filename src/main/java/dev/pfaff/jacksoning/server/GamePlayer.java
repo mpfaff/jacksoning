@@ -1,34 +1,39 @@
 package dev.pfaff.jacksoning.server;
 
+import dev.pfaff.jacksoning.Constants;
 import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.Winner;
 import dev.pfaff.jacksoning.mixin.AccessorEntity;
 import dev.pfaff.jacksoning.mixin.AccessorFireworkRocketEntity;
-import dev.pfaff.jacksoning.server.shop.ShopState;
+import dev.pfaff.jacksoning.mixin.AccessorHungerManager;
 import dev.pfaff.jacksoning.util.VecUtil;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.WrittenBookContentComponent;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.text.RawFilteredPair;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.GameMode;
 import org.slf4j.event.Level;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
+import java.util.Set;
 
 import static dev.pfaff.jacksoning.Config.jacksonBaseHealthBoost;
 import static dev.pfaff.jacksoning.Config.jacksonZoneRadius;
@@ -36,7 +41,6 @@ import static dev.pfaff.jacksoning.Config.respawnCooldown;
 import static dev.pfaff.jacksoning.Constants.ITEM_COBBLE_TURRET;
 import static dev.pfaff.jacksoning.Constants.MODIFIED_ATTRIBUTES;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_UN_LEADER_ATTACK_DAMAGE;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_GROUP;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH;
 import static dev.pfaff.jacksoning.server.PlayerData.RESPAWN_TIME_SPAWNED;
 
@@ -45,7 +49,7 @@ public final class GamePlayer {
 
 	public final ServerSidebar sidebar = new ServerSidebar();
 
-	private final HashSet<UUID> keepModifiers = new HashSet<>();
+	private final HashSet<String> keepModifiers = new HashSet<>();
 
 	private final ServerPlayerEntity player;
 
@@ -105,24 +109,23 @@ public final class GamePlayer {
 		return VecUtil.all(asMc().getBlockPos().subtract(spawnPos), dist -> Math.abs(dist) < jacksonZoneRadius());
 	}
 
-	public void applyModifier(EntityAttribute attribute,
-							   UUID id,
-							   double value,
-							   EntityAttributeModifier.Operation operation) {
-		keepModifiers.add(id);
-		if (value == switch (operation) {
-			case ADDITION -> 0.0;
-			case MULTIPLY_BASE, MULTIPLY_TOTAL -> 1.0;
-		}) {
+	public void applyModifier(RegistryEntry<EntityAttribute> attribute,
+							  Identifier id,
+							  double value,
+							  EntityAttributeModifier.Operation operation) {
+		if (id.getNamespace().equals(Constants.MOD_ID)) {
+			keepModifiers.add(id.getPath());
+		}
+		if (value == 0.0) {
 			return;
 		}
 		var inst = Objects.requireNonNull(asMc().getAttributeInstance(attribute));
 		var modifier = inst.getModifier(id);
 		if (modifier != null) {
-			if (modifier.getValue() == value && modifier.getOperation() == operation) return;
+			if (modifier.value() == value && modifier.operation() == operation) return;
 			inst.removeModifier(id);
 		}
-		modifier = new EntityAttributeModifier(id, MODIFIER_GROUP, value, operation);
+		modifier = new EntityAttributeModifier(id, value, operation);
 		inst.addPersistentModifier(modifier);
 	}
 
@@ -143,29 +146,30 @@ public final class GamePlayer {
 				keepModifiers.clear();
 				switch (data().role()) {
 					case Jackson -> {
-						applyModifier(EntityAttributes.GENERIC_MAX_HEALTH,
+						applyModifier(EntityAttributes.MAX_HEALTH,
 									  MODIFIER_JACKSON_MAX_HEALTH,
 									  jacksonBaseHealthBoost(),
-									  EntityAttributeModifier.Operation.ADDITION);
+									  EntityAttributeModifier.Operation.ADD_VALUE);
 					}
 					case UNLeader -> {
-						applyModifier(EntityAttributes.GENERIC_ATTACK_DAMAGE,
+						applyModifier(EntityAttributes.ATTACK_DAMAGE,
 									  MODIFIER_UN_LEADER_ATTACK_DAMAGE,
 									  -4.0,
-									  EntityAttributeModifier.Operation.ADDITION);
+									  EntityAttributeModifier.Operation.ADD_VALUE);
 					}
 					default -> {
 					}
 				}
-				if (data().roleState.shop() instanceof ShopState shop) {
+				var shop = data().roleState.shop();
+				if (shop != null) {
 					shop.levels().forEach(entry -> entry.left().onTick(this, entry.rightInt()));
 				}
 				// TODO: gonna have to make `keep` accessible to the shop item onTick handler
 				for (var attribute : MODIFIED_ATTRIBUTES) {
 					var inst = Objects.requireNonNull(asMc().getAttributeInstance(attribute));
 					for (var modifier : inst.getModifiers()) {
-						if (modifier.getName().equals(MODIFIER_GROUP) && !keepModifiers.contains(modifier.getId())) {
-							inst.removeModifier(modifier.getId());
+						if (modifier.id().getNamespace().equals(Constants.MOD_ID) && !keepModifiers.contains(modifier.id())) {
+							inst.removeModifier(modifier.id());
 						}
 					}
 				}
@@ -202,10 +206,10 @@ public final class GamePlayer {
 				case Jackson -> {
 					if (isInsideJacksonZone()) {
 						for (int i = 0; i < 20; i++) {
-							LightningEntity entity = EntityType.LIGHTNING_BOLT.create(asMc().world);
+							LightningEntity entity = EntityType.LIGHTNING_BOLT.create(asMc().getWorld(), SpawnReason.EVENT);
 							entity.refreshPositionAfterTeleport(asMc().getPos());
 							entity.setCosmetic(true);
-							asMc().world.spawnEntity(entity);
+							asMc().getWorld().spawnEntity(entity);
 						}
 
 						// game over
@@ -216,7 +220,7 @@ public final class GamePlayer {
 					if (g.players().stream().filter(PlayerRole.UNLeader::matches).count() == 1) {
 						var pos = asMc().getPos();
 						for (int i = 0; i < 20; i++) {
-							FireworkRocketEntity entity = new FireworkRocketEntity(asMc().world, pos.x, pos.y, pos.z, ItemStack.EMPTY);
+							FireworkRocketEntity entity = new FireworkRocketEntity(asMc().getWorld(), pos.x, pos.y, pos.z, ItemStack.EMPTY);
 							((AccessorFireworkRocketEntity)entity).lifeTime(((AccessorFireworkRocketEntity)entity).lifeTime() + 100);
 							var min = -40f;
 							var max = -10f;
@@ -224,7 +228,7 @@ public final class GamePlayer {
 							entity.setYaw(((AccessorEntity)entity).random().nextFloat() * 360f);
 							entity.setVelocity(entity.getRotationVector().multiply(entity.getVelocity().lengthSquared()));
 							entity.refreshPositionAfterTeleport(asMc().getPos());
-							asMc().world.spawnEntity(entity);
+							asMc().getWorld().spawnEntity(entity);
 						}
 						g.state().gameOver(server(), Winner.Jackson);
 					} else {
@@ -243,7 +247,14 @@ public final class GamePlayer {
 
 	public void tpSpawn() {
 		var spawnPos = server().getOverworld().getSpawnPos();
-		asMc().teleport(server().getOverworld(), spawnPos.getX(), spawnPos.getY(), spawnPos.getZ(), 0f, 0f);
+		asMc().teleport(server().getOverworld(),
+						spawnPos.getX(),
+						spawnPos.getY(),
+						spawnPos.getZ(),
+						Set.of(),
+						0f,
+						0f,
+						true);
 	}
 
 	public void respawnPlayer(int delay) {
@@ -252,7 +263,7 @@ public final class GamePlayer {
 		asMc().setOnFire(false);
 		asMc().getHungerManager().setFoodLevel(20);
 		asMc().getHungerManager().setSaturationLevel(5f);
-		asMc().getHungerManager().setExhaustion(0f);
+		((AccessorHungerManager) asMc().getHungerManager()).setExhaustion(0f);
 		tickLogic();
 		if (game().state().isRunning()) {
 			tpSpawn();
@@ -260,12 +271,12 @@ public final class GamePlayer {
 		asMc().setHealth(asMc().getMaxHealth());
 	}
 
-	static final List<NbtString> BOOK_PAGES = List.of(
-		NbtString.of("{\"text\":\"STEP 1:\\nPLACING THE TURRET\\nright click the turret on the block you want to turret on. \\n\\nThe turret must rest on the top of blocks. they cannot stick to the bottom or sides of blocks.\\n\\nTurrets obey gravity,\\nand can ride minecart\"}"),
-		NbtString.of("{\"text\":\"STEP 2:\\nMOVING THAT GEAR UP\\nShift + right click the \\nturret to access it's \\nsettings. \\nClick \\\"dismantle turret\\\" to move it. It will drop as an item. It will drop it's inventory. It will keep it's hp.\"}"),
-		NbtString.of("{\"text\":\"STEP 3:\\nTARGETING JACKSON\\nShift + right click the turret to access settings. Type \\\"player\\\" (caps sensitive) into the text box, and press \\\"add new entity type to target list\\\". The text box should empty itself. Then press \\\"claim this turret\\\" to prevent hijacking. \"}"),
-		NbtString.of("{\"text\":\"STEP 4:\\nAMMO\\nThe turrets require ammo. \\n\\nCobble turrets need cobblestone and Brick turrets need bricks (crafting material, not block).\\n\\nright click the turrets to access their ammo storage and fill them. \\n\"}"),
-		NbtString.of("{\"text\":\"STEP 5:\\nREPAIRING\\nShift + right click the turret while holding a titanium ingot to repair the turret.\"}")
+	static final List<RawFilteredPair<Text>> BOOK_PAGES = List.of(
+		RawFilteredPair.of(Text.of("STEP 1:\nPLACING THE TURRET\nright click the turret on the block you want to turret on. \n\nThe turret must rest on the top of blocks. they cannot stick to the bottom or sides of blocks.\n\nTurrets obey gravity,\nand can ride minecart")),
+		RawFilteredPair.of(Text.of("STEP 2:\nMOVING THAT GEAR UP\nShift + right click the \nturret to access it's \nsettings. \nClick \"dismantle turret\" to move it. It will drop as an item. It will drop it's inventory. It will keep it's hp.")),
+		RawFilteredPair.of(Text.of("STEP 3:\nTARGETING JACKSON\nShift + right click the turret to access settings. Type \"player\" (caps sensitive) into the text box, and press \"add new entity type to target list\". The text box should empty itself. Then press \"claim this turret\" to prevent hijacking.")),
+		RawFilteredPair.of(Text.of("STEP 4:\nAMMO\nThe turrets require ammo. \n\nCobble turrets need cobblestone and Brick turrets need bricks (crafting material, not block).\n\nright click the turrets to access their ammo storage and fill them.")),
+		RawFilteredPair.of(Text.of("STEP 5:\nREPAIRING\nShift + right click the turret while holding a titanium ingot to repair the turret."))
 	);
 
 	public void giveKit() {
@@ -278,14 +289,11 @@ public final class GamePlayer {
 				inv.armor.set(1, new ItemStack(Items.LEATHER_LEGGINGS));
 				inv.armor.set(0, new ItemStack(Items.LEATHER_BOOTS));
 				var book = new ItemStack(Items.WRITTEN_BOOK);
-				book.setSubNbt("title", NbtString.of("TURRET MANUAL"));
-				book.setSubNbt("author", NbtString.of("samplest"));
-				var pages = new NbtList();
-				pages.addAll(BOOK_PAGES);
-				book.setSubNbt("pages", pages);
+				book.set(DataComponentTypes.WRITTEN_BOOK_CONTENT, new WrittenBookContentComponent(RawFilteredPair.of("TURRET MANUAL"), "samplest", 0, BOOK_PAGES, true));
 				inv.insertStack(book);
-				if (Registry.ITEM.getOrEmpty(ITEM_COBBLE_TURRET).orElse(null) instanceof Item item) {
-					inv.insertStack(new ItemStack(item));
+				var cobbleTurretItem = Registries.ITEM.get(ITEM_COBBLE_TURRET);
+				if (cobbleTurretItem != Items.AIR) {
+					inv.insertStack(new ItemStack(cobbleTurretItem));
 				}
 				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));
 				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));

@@ -1,26 +1,22 @@
 package dev.pfaff.jacksoning.server.shop;
 
 import dev.pfaff.jacksoning.Jacksoning;
-import dev.pfaff.jacksoning.util.nbt.NbtElement;
-import dev.pfaff.jacksoning.util.nbt.NbtList;
-import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LoreComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
+import net.minecraft.util.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.event.Level;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import static dev.pfaff.jacksoning.Constants.ENCHANTMENT_DUMMY;
 import static dev.pfaff.jacksoning.Constants.GROOVE_VALUE_STYLE;
-import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_TEXT;
-import static net.minecraft.item.ItemStack.DISPLAY_KEY;
-import static net.minecraft.item.ItemStack.ENCHANTMENTS_KEY;
-import static net.minecraft.item.ItemStack.LORE_KEY;
 
 public final class ShopInventory implements Inventory {
 	private final ShopState shop;
@@ -43,7 +39,7 @@ public final class ShopInventory implements Inventory {
 		if (info == null) return ItemStack.EMPTY;
 		var item = info.item();
 		ItemStack stack = item.icon(info.lvl()).copy();
-		stack.getEnchantments().clear();
+		stack.remove(DataComponentTypes.ENCHANTMENTS);
 		if (info.lvl() <= shop.getLevel(item)) {
 			stack = new ItemStack(Items.BLACK_STAINED_GLASS_PANE);
 			//var nbt = stack.getOrCreateNbt();
@@ -58,19 +54,17 @@ public final class ShopInventory implements Inventory {
 		}
 		stack.setCount(1);
 		var name = item.name(info.lvl());
-		stack.setCustomName(Text.literal(name));
-		// hide all sections so only our lore is displayed
-		stack.getOrCreateNbt().putInt("HideFlags", ~0);
+		stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(name));
+		stack.set(DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP, Unit.INSTANCE);
+		stack.remove(DataComponentTypes.ATTRIBUTE_MODIFIERS);
 		int cost = item.cost(info.lvl());
-		var display = stack.getOrCreateSubNbt(DISPLAY_KEY);
-		var lore = NbtElement.list();
+		var lore = new ArrayList<Text>();
 		for (var line : item.lore(info.lvl())) {
-			lore.addAs(NBT_TEXT, Text.of(line));
+			lore.add(Text.of(line));
 		}
-		lore.addAs(NBT_TEXT, Text.of(""));
-		lore.addAs(NBT_TEXT,
-				   Text.literal("Cost: ").append(Text.literal(cost + " groove").setStyle(GROOVE_VALUE_STYLE)));
-		NbtElement.of(display).put(LORE_KEY, lore);
+		lore.add(Text.of(""));
+		lore.add(Text.literal("Cost: ").append(Text.literal(cost + " groove").setStyle(GROOVE_VALUE_STYLE)));
+		stack.set(DataComponentTypes.LORE, new LoreComponent(lore));
 		return stack;
 	}
 

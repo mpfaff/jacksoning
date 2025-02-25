@@ -42,13 +42,13 @@ public abstract sealed class RoleState implements Container {
 
 	@Nullable
 	public final ShopState shop() {
-		return switch (this) {
-			case RoleState.None ignored -> null;
-			case RoleState.UNLeader ignored -> null;
-			case RoleState.Referee ignored -> null;
-			case RoleState.Jackson jackson -> jackson.shop;
-			case RoleState.Mistress mistress -> mistress.shop;
-		};
+		if (this instanceof Jackson jackson) {
+			return jackson.shop;
+		} else if (this instanceof Mistress mistress) {
+			return mistress.shop;
+		} else {
+			return null;
+		}
 	}
 
 	@MustBeInvokedByOverriders

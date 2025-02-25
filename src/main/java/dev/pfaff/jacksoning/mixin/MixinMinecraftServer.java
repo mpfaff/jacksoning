@@ -6,6 +6,7 @@ import dev.pfaff.jacksoning.server.IGame;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,14 +28,18 @@ public abstract class MixinMinecraftServer implements IGame {
 
 	@Inject(method = "initScoreboard", at = @At(value = "TAIL"))
 	private final void init$jacksoning(PersistentStateManager persistentStateManager, CallbackInfo ci) {
-		persistentStateManager.getOrCreate(nbt -> {
-			try {
-				this.state.inner.readNbt(NbtElement.of(nbt));
-			} catch (CodecException e) {
-				throw new RuntimeException(e);
-			}
-			return this.state.inner.persistentState;
-		}, () -> this.state.inner.persistentState, Constants.PERSISTENT_STATE_ID);
+		persistentStateManager.getOrCreate(new PersistentState.Type<>(
+			() -> this.state.inner.persistentState,
+			(nbt, lookup) -> {
+				try {
+					this.state.inner.readNbt(NbtElement.of(nbt));
+				} catch (CodecException e) {
+					throw new RuntimeException(e);
+				}
+				return this.state.inner.persistentState;
+			},
+			null
+		), Constants.PERSISTENT_STATE_ID);
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))

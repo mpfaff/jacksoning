@@ -1,17 +1,17 @@
 package dev.pfaff.jacksoning.sidebar;
 
 import com.google.common.base.Preconditions;
+import dev.pfaff.jacksoning.util.NetworkUtil;
 import dev.pfaff.jacksoning.util.StringOrText;
 import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 
 import java.util.List;
 
-import static dev.pfaff.jacksoning.util.NetworkUtil.readTextReprString;
-import static dev.pfaff.jacksoning.util.NetworkUtil.readTextReprText;
-import static dev.pfaff.jacksoning.util.NetworkUtil.writeTextUntagged;
+import static dev.pfaff.jacksoning.util.NetworkUtil.readString;
 
 public sealed interface SidebarCommand {
 	static final int OPCODE_TRUNCATE = 0;
@@ -41,12 +41,12 @@ public sealed interface SidebarCommand {
 			case OPCODE_SET_LINE_STRING -> {
 				int index = buf.readUnsignedByte();
 				byte flags = buf.readByte();
-				yield new SetLine(index, new StringOrText(readTextReprString(buf), null), flags);
+				yield new SetLine(index, new StringOrText(readString(buf), null), flags);
 			}
 			case OPCODE_SET_LINE_TEXT -> {
 				int index = buf.readUnsignedByte();
 				byte flags = buf.readByte();
-				yield new SetLine(index, new StringOrText(null, readTextReprText(buf)), flags);
+				yield new SetLine(index, new StringOrText(null, TextCodecs.PACKET_CODEC.decode(buf)), flags);
 			}
 			default -> throw new DecoderException("Unrecognized sidebar command: " + tag);
 		};
@@ -70,7 +70,7 @@ public sealed interface SidebarCommand {
 	}
 
 	static SetLine setLine(int index, StringOrText text) {
-		return setLine(index, text, Alignment.Left);
+		return setLine(index, text, Alignment.Start);
 	}
 
 	static SetLine setLine(int index, String string) {
@@ -118,9 +118,9 @@ public sealed interface SidebarCommand {
 			buf.writeByte(index);
 			buf.writeByte(flags);
 			if (text.string() != null) {
-				writeTextUntagged(buf, text.string());
+				NetworkUtil.writeStringWithTruncation(buf, text.string());
 			} else {
-				writeTextUntagged(buf, text.text());
+				TextCodecs.PACKET_CODEC.encode(buf, text.text());
 			}
 		}
 	}

@@ -11,7 +11,7 @@ public class Jacksoning implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		Blocks.register();
-		Items.register();
+		Blocks.initialize();
+		Items.initialize();
 	}
 }

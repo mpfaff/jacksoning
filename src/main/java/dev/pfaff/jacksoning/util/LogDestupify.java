@@ -12,6 +12,15 @@ import java.util.function.Supplier;
  * Some utilities to destupify the logging API.
  */
 public final class LogDestupify {
+	/**
+	 * An extra gate to workaround awful {@link Logger} implementations returning {@code true} from
+	 * {@link Logger#isDebugEnabled()}.
+	 */
+	private static final boolean DEBUG_ENABLED = false;
+	/**
+	 * @see #DEBUG_ENABLED
+	 */
+	private static final boolean TRACE_ENABLED = false;
 	private final Logger logger;
 
 	public LogDestupify(Logger logger) {
@@ -24,8 +33,8 @@ public final class LogDestupify {
 			case ERROR -> logger.isErrorEnabled();
 			case WARN -> logger.isWarnEnabled();
 			case INFO -> logger.isInfoEnabled();
-			case DEBUG -> logger.isDebugEnabled();
-			case TRACE -> logger.isTraceEnabled();
+			case DEBUG -> DEBUG_ENABLED && logger.isDebugEnabled();
+			case TRACE -> TRACE_ENABLED && logger.isTraceEnabled();
 		};
 	}
 

@@ -2,19 +2,17 @@
   "required": true,
   "minVersion": "0.8",
   "package": "dev.pfaff.jacksoning.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AccessorEntity",
     "AccessorFireworkRocketEntity",
+    "AccessorHungerManager",
     "MixinCraftingScreenHandler",
     "MixinIntegratedServer",
     "MixinMinecraftServer",
     "MixinPillagerEntity",
     "MixinServerPlayerEntity",
     "MixinServerWorld"
-  ],
-  "client": [
-    "MixinChatScreen"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -41,7 +41,8 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 	private final void readCustomDataFromNbt(NbtCompound nbt, CallbackInfo ci) {
 		var nbtWrapper = NbtElement.of(nbt);
 		try {
-			if (nbtWrapper.getAs(PLAYER_NBT_KEY, NBT_COMPOUND.or(null)) instanceof dev.pfaff.jacksoning.util.nbt.NbtCompound inner) {
+			var inner = nbtWrapper.getAs(PLAYER_NBT_KEY, NBT_COMPOUND.or(null));
+			if (inner != null) {
 				gamePlayer.data.readNbt(inner);
 				// trigger change notifiers
 				gamePlayer.roleState(gamePlayer.data.roleState);

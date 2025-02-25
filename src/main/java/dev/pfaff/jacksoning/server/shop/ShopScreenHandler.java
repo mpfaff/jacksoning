@@ -37,7 +37,7 @@ public final class ShopScreenHandler extends GenericContainerScreenHandler {
 	}
 
 	@Override
-	public ItemStack transferSlot(PlayerEntity player, int index) {
+	public ItemStack quickMove(PlayerEntity player, int index) {
 		return ItemStack.EMPTY;
 	}
 
@@ -48,6 +48,7 @@ public final class ShopScreenHandler extends GenericContainerScreenHandler {
 
 	@Override
 	public void onSlotClick(int slot, int button, SlotActionType actionType, PlayerEntity player) {
+		if (slot < 0) return;
 		ItemStack slotStack;
 		if (handleOnSlotClick(slot, actionType, player)) {
 			// success
@@ -74,16 +75,15 @@ public final class ShopScreenHandler extends GenericContainerScreenHandler {
 				var targetLvl = shop.getLevel(info.item()) + 1;
 				if (info.lvl() != targetLvl) {
 					if (info.lvl() < targetLvl) {
-						player.sendMessage(Text.translatable("message.jacksoning.shop.purchase_result.already_purchased").formatted(Formatting.RED));
+						player.sendMessage(Text.translatable("message.jacksoning.shop.purchase_result.already_purchased").formatted(Formatting.RED), true);
 					} else {
-						player.sendMessage(Text.translatable("message.jacksoning.shop.purchase_result.must_purchase_lower")
-											   .formatted(Formatting.RED));
+						player.sendMessage(Text.translatable("message.jacksoning.shop.purchase_result.must_purchase_lower").formatted(Formatting.RED), true);
 					}
 					return false;
 				}
 				var result = shop.purchase(GamePlayer.cast((ServerPlayerEntity) player), info.item().id());
 				if (result != PurchaseResult.Success) {
-					player.sendMessage(result.text.copy().formatted(Formatting.RED));
+					player.sendMessage(result.text.copy().formatted(Formatting.RED), true);
 					return false;
 				}
 				return true;
