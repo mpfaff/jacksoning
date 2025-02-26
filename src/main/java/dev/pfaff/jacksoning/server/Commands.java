@@ -13,10 +13,8 @@ import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.server.shop.PurchaseResult;
 import dev.pfaff.jacksoning.server.shop.ShopScreenHandler;
 import dev.pfaff.jacksoning.server.shop.ShopState;
-import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.NamedScreenHandlerFactory;
@@ -29,7 +27,6 @@ import org.slf4j.event.Level;
 import java.util.Objects;
 
 import static dev.pfaff.jacksoning.Constants.MOD_ID;
-import static dev.pfaff.jacksoning.Constants.TYPE_PLAYER_ROLE;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
@@ -39,12 +36,6 @@ public final class Commands {
 		var player = source.getPlayer();
 		if (player == null) return false;
 		return GamePlayer.cast(player).isReferee();
-	}
-
-	public static void registerTypes() {
-		ArgumentTypeRegistry.registerArgumentType(TYPE_PLAYER_ROLE,
-												  PlayerRole.ARGUMENT_TYPE.getClass(),
-												  ConstantArgumentSerializer.of(() -> PlayerRole.ARGUMENT_TYPE));
 	}
 
 	private static Command<ServerCommandSource> catchingIllegalState(Command<ServerCommandSource> f) {
@@ -155,17 +146,38 @@ public final class Commands {
 			}
 			return 0;
 		}))));
-		dispatcher.register(literal("setrole").requires(Commands::isReferee)
-											  .then(argument("players", EntityArgumentType.players()).then(argument(
-												  "role",
-												  PlayerRole.ARGUMENT_TYPE).executes(context -> {
-												  var players = EntityArgumentType.getPlayers(context, "players");
-												  var role = context.getArgument("role", PlayerRole.class);
-												  for (var player : players) {
-													  var gp = GamePlayer.cast(player);
-													  gp.setInitRole(role);
-												  }
-												  return 0;
-											  }))));
+		dispatcher.register(
+			literal("setrole")
+				.requires(Commands::isReferee)
+				.then(
+					argument("players", EntityArgumentType.players())
+						.then(
+							argument(
+								"role",
+								StringArgumentType.word()
+							).suggests((context, builder1) -> {
+								for (var role : PlayerRole.values()) {
+									builder1.suggest(role.id);
+								}
+								return builder1.buildFuture();
+							}).executes(context -> {
+								var players = EntityArgumentType.getPlayers(
+									context,
+									"players"
+								);
+								var roleString = context.getArgument("role", String.class);
+								PlayerRole role = PlayerRole.BY_NAME.get(roleString);
+								if (role == null) {
+									throw new SimpleCommandExceptionType(Text.translatable("argument." + MOD_ID + ".role.invalid", roleString)).create();
+								}
+								for (var player : players) {
+									var gp = GamePlayer.cast(player);
+									gp.setInitRole(role);
+								}
+								return 0;
+							})
+						)
+				)
+		);
 	}
 }

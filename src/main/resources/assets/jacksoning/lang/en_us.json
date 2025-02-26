@@ -1,11 +1,9 @@
 {
-  "block.jacksoning.self_destruct_button": "Self Destruct Button",
   "enum.jacksoning.none": "None",
   "enum.jacksoning.un_leader": "UN Leader",
   "enum.jacksoning.jackson": "Jackson",
   "enum.jacksoning.mistress": "Mistress",
   "enum.jacksoning.referee": "Referee",
-  "item.jacksoning.groove": "Groove",
   "label.jacksoning.role": "Role",
   "message.jacksoning.game_lifecycle.not_started": "Awaiting Jackson",
   "message.jacksoning.game_lifecycle.running": "Rocking",
@@ -17,13 +15,13 @@
   "message.jacksoning.shop.cannot_use": "Only Jackson and his mistresses can use the shop.",
   "message.jacksoning.shop.purchase_result.inconsistency": "Spooky action at a distance: is someone playing tricks on us?",
   "message.jacksoning.shop.purchase_result.max_level": "That upgrade is maxed out!",
-  "message.jacksoning.shop.purchase_result.not_enough_groove": "You lack enough groove for this purchase.",
+  "message.jacksoning.shop.purchase_result.not_enough_currency": "You lack enough emeralds for this purchase.",
   "message.jacksoning.shop.purchase_result.no_such_item": "That item doesn't exist.",
   "message.jacksoning.shop.purchase_result.must_purchase_lower": "You must purchase the lower tier first.",
   "message.jacksoning.shop.purchase_result.already_purchased": "Already purchased.",
   "message.jacksoning.shop.not_running": "The game must be active to use the shop.",
   "message.jacksoning.shop.not_spawned": "You must be spawned in to use the shop.",
-  "refereePanel.title": "Referee Panel",
+  "argument.jacksoning.role.invalid": "Invalid role '%s'",
   "key.jacksoning.referee": "Open Referee Panel",
   "category.jacksoning": "The Jacksoning"
 }

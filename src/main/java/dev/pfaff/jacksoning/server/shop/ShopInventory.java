@@ -1,10 +1,9 @@
 package dev.pfaff.jacksoning.server.shop;
 
 import dev.pfaff.jacksoning.Jacksoning;
+import dev.pfaff.jacksoning.server.screen.InteractiveInventory;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
@@ -18,14 +17,14 @@ import java.util.List;
 
 import static dev.pfaff.jacksoning.Constants.GROOVE_VALUE_STYLE;
 
-public final class ShopInventory implements Inventory {
+public final class ShopInventory extends InteractiveInventory {
 	private final ShopState shop;
-	private final int size;
 	private final ItemStack[] stacks;
 
 	public ShopInventory(ShopState shop, int size) {
+		super(size);
+
 		this.shop = shop;
-		this.size = size;
 
 		var stacks = new ItemStack[size];
 		for (int i = 0; i < size; i++) {
@@ -66,16 +65,6 @@ public final class ShopInventory implements Inventory {
 		lore.add(Text.literal("Cost: ").append(Text.literal(cost + " groove").setStyle(GROOVE_VALUE_STYLE)));
 		stack.set(DataComponentTypes.LORE, new LoreComponent(lore));
 		return stack;
-	}
-
-	@Override
-	public int size() {
-		return size;
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return false;
 	}
 
 	private static final int INNER_COLS = 9 - 2;
@@ -133,41 +122,12 @@ public final class ShopInventory implements Inventory {
 	}
 
 	@Override
-	public ItemStack getStack(int slot) {
-		if (slot < 0 || slot >= size) return ItemStack.EMPTY;
+	public ItemStack getStackInBounds(int slot) {
 		return stacks[slot];
 	}
 
 	public ItemStack updateStack(int slot) {
 		if (slot < 0 || slot >= size) return ItemStack.EMPTY;
 		return stacks[slot] = generateStack(slot);
-	}
-
-	@Override
-	public ItemStack removeStack(int slot, int amount) {
-		return ItemStack.EMPTY;
-	}
-
-	@Override
-	public ItemStack removeStack(int slot) {
-		return ItemStack.EMPTY;
-	}
-
-	@Override
-	public void setStack(int slot, ItemStack stack) {
-
-	}
-
-	@Override
-	public void markDirty() {
-	}
-
-	@Override
-	public boolean canPlayerUse(PlayerEntity player) {
-		return true;
-	}
-
-	@Override
-	public void clear() {
 	}
 }

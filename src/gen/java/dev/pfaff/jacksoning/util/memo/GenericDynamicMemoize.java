@@ -34,6 +34,18 @@ public final class GenericDynamicMemoize implements DynamicMemoize {
 	private Computer<?> func;
 	private Object result;
 
+	public void reset() {
+		a = null;
+		b = null;
+		c = null;
+		d = null;
+		e = null;
+		f = null;
+		g = null;
+		func = null;
+		result = null;
+	}
+
 	private boolean funcDirty(Computer func) {
 		if (this.func == null || this.func.getClass() != func.getClass()) {
 			Jacksoning.LOGGER.log(LOG_LEVEL_DIRTY, () -> "Computer is dirty: " + this.func + " != " + func);

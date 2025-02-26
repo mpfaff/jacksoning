@@ -18,6 +18,10 @@ public record StringOrText(@Nullable String string, @Nullable Text text) {
 		assert text == null || asLiteral(text) == null : "You used the internal constructor, didn't you?";
 	}
 
+	public Text asText() {
+		return text != null ? text : Text.of(string);
+	}
+
 	public static StringOrText of(@NotNull String string) {
 		return new StringOrText(Objects.requireNonNull(string), null);
 	}

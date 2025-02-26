@@ -5,6 +5,7 @@ import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.Winner;
 import dev.pfaff.jacksoning.items.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.GameMode;
 
@@ -136,7 +137,6 @@ public final class GameState {
 		assert isRunning();
 		server.getOverworld().setTimeOfDay(8000);
 		for (var p : IGame.cast(server).players()) {
-			// TODO: https://git.pfaff.dev/michael/jacksoning/issues/8
 			var gp = GamePlayer.cast(p);
 			gp.respawnPlayer(gp.data().role() == PlayerRole.Jackson ? jacksonSpawnDelay() : 0);
 			gp.giveKit();
@@ -155,8 +155,17 @@ public final class GameState {
 		if (!isRunning()) throw new IllegalStateException("Game is not running");
 		inner.time(TIME_ENDED);
 		assert isEnded();
+		resetPlayers(server);
+	}
+
+	private void resetPlayers(MinecraftServer server) {
 		server.getPlayerManager().getPlayerList().forEach(p -> {
 			p.getInventory().clear();
+			Registries.ATTRIBUTE.streamEntries().forEach(attribute -> {
+				var inst = p.getAttributeInstance(attribute);
+				if (inst == null) return;
+				for (var modifier : inst.getModifiers()) inst.removeModifier(modifier.id());
+			});
 			p.changeGameMode(GameMode.SPECTATOR);
 		});
 	}
@@ -164,6 +173,8 @@ public final class GameState {
 	public void reset(MinecraftServer server) {
 		if (isRunning()) {
 			stop(server);
+		} else {
+			resetPlayers(server);
 		}
 		inner.init();
 	}
@@ -182,7 +193,7 @@ public final class GameState {
 					var role = GamePlayer.cast(p).data().role();
 					if (role == PlayerRole.Jackson || role == PlayerRole.Mistress) {
 						if (GamePlayer.cast(p).data().isSpawned()) {
-							p.giveItemStack(new ItemStack(Items.GROOVE, economy() * giftGroove));
+							p.giveItemStack(new ItemStack(Items.CURRENCY, economy() * giftGroove));
 						}
 					}
 				});

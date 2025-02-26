@@ -34,6 +34,14 @@ public final class GenericDynamicMemoize implements DynamicMemoize {
 	private Computer<?> func;
 	private Object result;
 
+	public void reset() {
+		{% for c in char_range(from='a', n=DIFFING_COMPUTER_MAX_ARITY) -%}
+		{{ c }} = null;
+		{% endfor -%}
+		func = null;
+		result = null;
+	}
+
 	private boolean funcDirty(Computer func) {
 		if (this.func == null || this.func.getClass() != func.getClass()) {
 			Jacksoning.LOGGER.log(LOG_LEVEL_DIRTY, () -> "Computer is dirty: " + this.func + " != " + func);

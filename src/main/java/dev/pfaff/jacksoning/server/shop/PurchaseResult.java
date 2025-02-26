@@ -6,7 +6,7 @@ public enum PurchaseResult {
 	Success(null),
 	Inconsistency("inconsistency"),
 	MaxLevel("max_level"),
-	NotEnoughGroove("not_enough_groove"),
+	NotEnoughCurrency("not_enough_currency"),
 	NoSuchItem("no_such_item");
 
 	public final Text text;

@@ -6,6 +6,7 @@ import dev.pfaff.jacksoning.Winner;
 import dev.pfaff.jacksoning.mixin.AccessorEntity;
 import dev.pfaff.jacksoning.mixin.AccessorFireworkRocketEntity;
 import dev.pfaff.jacksoning.mixin.AccessorHungerManager;
+import dev.pfaff.jacksoning.server.sidebar.ServerSidebar;
 import dev.pfaff.jacksoning.util.VecUtil;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.WrittenBookContentComponent;
@@ -18,6 +19,7 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
@@ -38,10 +40,8 @@ import java.util.Set;
 import static dev.pfaff.jacksoning.Config.jacksonBaseHealthBoost;
 import static dev.pfaff.jacksoning.Config.jacksonZoneRadius;
 import static dev.pfaff.jacksoning.Config.respawnCooldown;
-import static dev.pfaff.jacksoning.Constants.ITEM_COBBLE_TURRET;
-import static dev.pfaff.jacksoning.Constants.MODIFIED_ATTRIBUTES;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_UN_LEADER_ATTACK_DAMAGE;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_MISTRESS_MAX_HEALTH;
 import static dev.pfaff.jacksoning.server.PlayerData.RESPAWN_TIME_SPAWNED;
 
 public final class GamePlayer {
@@ -113,9 +113,7 @@ public final class GamePlayer {
 							  Identifier id,
 							  double value,
 							  EntityAttributeModifier.Operation operation) {
-		if (id.getNamespace().equals(Constants.MOD_ID)) {
-			keepModifiers.add(id.getPath());
-		}
+		keepModifiers.add(id.getPath());
 		if (value == 0.0) {
 			return;
 		}
@@ -127,6 +125,10 @@ public final class GamePlayer {
 		}
 		modifier = new EntityAttributeModifier(id, value, operation);
 		inst.addPersistentModifier(modifier);
+	}
+
+	public void onConnect() {
+		sidebar.initialize(player);
 	}
 
 	public void tick() {
@@ -152,10 +154,12 @@ public final class GamePlayer {
 									  EntityAttributeModifier.Operation.ADD_VALUE);
 					}
 					case UNLeader -> {
-						applyModifier(EntityAttributes.ATTACK_DAMAGE,
-									  MODIFIER_UN_LEADER_ATTACK_DAMAGE,
-									  -4.0,
-									  EntityAttributeModifier.Operation.ADD_VALUE);
+					}
+					case Mistress -> {
+						applyModifier(EntityAttributes.MAX_HEALTH,
+									  MODIFIER_MISTRESS_MAX_HEALTH,
+									  -0.5,
+									  EntityAttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 					}
 					default -> {
 					}
@@ -164,15 +168,15 @@ public final class GamePlayer {
 				if (shop != null) {
 					shop.levels().forEach(entry -> entry.left().onTick(this, entry.rightInt()));
 				}
-				// TODO: gonna have to make `keep` accessible to the shop item onTick handler
-				for (var attribute : MODIFIED_ATTRIBUTES) {
-					var inst = Objects.requireNonNull(asMc().getAttributeInstance(attribute));
+				Registries.ATTRIBUTE.streamEntries().forEach(attribute -> {
+					var inst = asMc().getAttributeInstance(attribute);
+					if (inst == null) return;
 					for (var modifier : inst.getModifiers()) {
-						if (modifier.id().getNamespace().equals(Constants.MOD_ID) && !keepModifiers.contains(modifier.id())) {
+						if (modifier.id().getNamespace().equals(Constants.MOD_ID) && !keepModifiers.contains(modifier.id().getPath())) {
 							inst.removeModifier(modifier.id());
 						}
 					}
-				}
+				});
 			} else {
 				if (--data().respawnTime == RESPAWN_TIME_SPAWNED) {
 					respawnPlayer(0);
@@ -219,8 +223,9 @@ public final class GamePlayer {
 				case UNLeader -> {
 					if (g.players().stream().filter(PlayerRole.UNLeader::matches).count() == 1) {
 						var pos = asMc().getPos();
+						var itemStack = new ItemStack(Items.FIREWORK_ROCKET);
 						for (int i = 0; i < 20; i++) {
-							FireworkRocketEntity entity = new FireworkRocketEntity(asMc().getWorld(), pos.x, pos.y, pos.z, ItemStack.EMPTY);
+							FireworkRocketEntity entity = new FireworkRocketEntity(asMc().getWorld(), pos.x, pos.y, pos.z, itemStack);
 							((AccessorFireworkRocketEntity)entity).lifeTime(((AccessorFireworkRocketEntity)entity).lifeTime() + 100);
 							var min = -40f;
 							var max = -10f;
@@ -228,7 +233,7 @@ public final class GamePlayer {
 							entity.setYaw(((AccessorEntity)entity).random().nextFloat() * 360f);
 							entity.setVelocity(entity.getRotationVector().multiply(entity.getVelocity().lengthSquared()));
 							entity.refreshPositionAfterTeleport(asMc().getPos());
-							asMc().getWorld().spawnEntity(entity);
+							ProjectileEntity.spawn(entity, asMc().getServerWorld(), itemStack);
 						}
 						g.state().gameOver(server(), Winner.Jackson);
 					} else {
@@ -291,10 +296,6 @@ public final class GamePlayer {
 				var book = new ItemStack(Items.WRITTEN_BOOK);
 				book.set(DataComponentTypes.WRITTEN_BOOK_CONTENT, new WrittenBookContentComponent(RawFilteredPair.of("TURRET MANUAL"), "samplest", 0, BOOK_PAGES, true));
 				inv.insertStack(book);
-				var cobbleTurretItem = Registries.ITEM.get(ITEM_COBBLE_TURRET);
-				if (cobbleTurretItem != Items.AIR) {
-					inv.insertStack(new ItemStack(cobbleTurretItem));
-				}
 				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));
 				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));
 				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));

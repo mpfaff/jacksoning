@@ -5,17 +5,18 @@ import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.util.codec.Codecs;
 import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
-import net.minecraft.command.argument.EnumArgumentType;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.StringIdentifiable;
 import net.minecraft.world.GameMode;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 
+import static dev.pfaff.jacksoning.Constants.MOD_ID;
+import static dev.pfaff.jacksoning.util.codec.Codecs.enumByNameMap;
 import static java.lang.invoke.MethodType.methodType;
 
-public enum PlayerRole implements StringIdentifiable {
+public enum PlayerRole {
 	None("none", GameMode.SPECTATOR),
 	UNLeader("un_leader", GameMode.SURVIVAL),
 	Jackson("jackson", GameMode.SURVIVAL),
@@ -24,25 +25,21 @@ public enum PlayerRole implements StringIdentifiable {
 
 	public static final PlayerRole DEFAULT = None;
 
-	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, String> STRING_CODEC = Codecs.enumAsString(
-		PlayerRole.class,
-		PlayerRole::asString);
-	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, NbtElement> NBT_CODEC = NbtCodecs.NBT_STRING.then(
-		STRING_CODEC);
+	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, String> STRING_CODEC =
+		Codecs.enumAsString(PlayerRole.class, PlayerRole::id);
+	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, NbtElement> NBT_CODEC =
+		NbtCodecs.NBT_STRING.then(STRING_CODEC);
+
+	public static final Map<String, PlayerRole> BY_NAME = enumByNameMap(PlayerRole.class, PlayerRole::id);
 
 	public final String id;
 	public final String translationKey;
 	public final GameMode gameMode;
 	private final MethodHandle stateConstructor;
 
-	public static final com.mojang.serialization.Codec<PlayerRole> MOJANG_CODEC = StringIdentifiable.createCodec(
-		PlayerRole::values);
-	public static final EnumArgumentType<PlayerRole> ARGUMENT_TYPE = new EnumArgumentType<>(MOJANG_CODEC,
-																							PlayerRole::values) {};
-
 	private PlayerRole(String id, GameMode gameMode) {
 		this.id = id;
-		this.translationKey = "enum.jacksoning." + id;
+		this.translationKey = "enum." + MOD_ID + "." + id;
 		this.gameMode = gameMode;
 		var l = MethodHandles.lookup();
 		try {
@@ -61,8 +58,7 @@ public enum PlayerRole implements StringIdentifiable {
 		}
 	}
 
-	@Override
-	public final String asString() {
+	public final String id() {
 		return id;
 	}
 

@@ -5,7 +5,6 @@ import dev.pfaff.jacksoning.server.GamePlayer;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
-import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
@@ -45,11 +44,11 @@ public final class ShopState implements Container {
 		if (item.isMaxLevel(lvl)) return PurchaseResult.MaxLevel;
 		int cost = item.cost(lvl+1);
 		var inv = player.asMc().getInventory();
-		int availableGroove = inv.count(Items.GROOVE);
-		if (availableGroove < cost) {
-			return PurchaseResult.NotEnoughGroove;
+		int availableEmeralds = inv.count(Items.CURRENCY);
+		if (availableEmeralds < cost) {
+			return PurchaseResult.NotEnoughCurrency;
 		}
-		if (!removeNItem(inv, Items.GROOVE, cost)) {
+		if (!removeNItem(inv, Items.CURRENCY, cost)) {
 			return PurchaseResult.Inconsistency;
 		}
 		levels.put(id, lvl+1);

@@ -6,6 +6,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 public class JacksoningServer implements ModInitializer {
@@ -23,7 +24,9 @@ public class JacksoningServer implements ModInitializer {
 			}
 			return true;
 		});
-		Commands.registerTypes();
+		ServerPlayConnectionEvents.INIT.register((handler, server) -> {
+			GamePlayer.cast(handler.player).onConnect();
+		});
 		CommandRegistrationCallback.EVENT.register(Commands::register);
 	}
 }

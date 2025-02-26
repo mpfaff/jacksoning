@@ -1,11 +1,12 @@
 package dev.pfaff.jacksoning.util.memo;
 
+import dev.pfaff.jacksoning.util.OpenArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
 
 public final class DiffingComputerList<R> {
-	private final List<GenericDynamicMemoize> entries = new ObjectArrayList<>(GenericDynamicMemoize.EMPTY_GENERIC_DIFFING_COMPUTERS);
+	private final OpenArrayList<GenericDynamicMemoize> entries = OpenArrayList.wrap(GenericDynamicMemoize.EMPTY_GENERIC_DIFFING_COMPUTERS);
 
 	private GenericDynamicMemoize getEntry(int i) {
 		if (i == entries.size()) {
@@ -38,5 +39,13 @@ public final class DiffingComputerList<R> {
 
 	public <A, B> R get(int i, A a, B b, Computer.By3<A, B, Integer, R> func) {
 		return getEntry(i).get(a, b, func, i);
+	}
+
+	public void truncate(int length) {
+		var arr = entries.a();
+		for (int i = length; i < arr.length; i++) {
+			var entry = arr[i];
+			if (entry != null) entry.reset();
+		}
 	}
 }

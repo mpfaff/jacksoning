@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.Identifier;
@@ -30,9 +29,6 @@ public class JacksoningClient implements ClientModInitializer {
 			drawer.addLayer(IdentifiedLayer.of(Identifier.of(MOD_ID, "sidebar"), ClientSidebar::render));
 		});
 
-		PayloadTypeRegistry.playS2C().register(UpdateUIPacket.ID, UpdateUIPacket.CODEC);
-
-		// TODO: make sure these are handled in order
 		ClientPlayNetworking.registerGlobalReceiver(UpdateUIPacket.ID, (packet, context) -> {
 			ClientSidebar.handleUpdate(packet);
 		});

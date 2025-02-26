@@ -1,7 +1,9 @@
-package dev.pfaff.jacksoning.server;
+package dev.pfaff.jacksoning.server.sidebar;
 
 import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.packet.UpdateUIPacket;
+import dev.pfaff.jacksoning.server.GameLifecycle;
+import dev.pfaff.jacksoning.server.GamePlayer;
 import dev.pfaff.jacksoning.sidebar.Alignment;
 import dev.pfaff.jacksoning.sidebar.SidebarCommand;
 import dev.pfaff.jacksoning.util.ChangeNotifier;
@@ -25,12 +27,20 @@ import static dev.pfaff.jacksoning.sidebar.SidebarCommand.setLine;
 import static dev.pfaff.jacksoning.sidebar.SidebarCommand.truncate;
 
 public final class ServerSidebar {
+	private SidebarImpl impl;
+
 	public final ChangeNotifier<BlockPos> blockPosChangeNotifier = ChangeNotifier.equality();
-	// stupid long field names. I just need them to be unique per call-site.
 	public boolean insideJacksonZoneCached = false;
 
 	private int previousLength = 0;
 	private final DiffingComputerList<Void> lineDiffer = new DiffingComputerList<>();
+
+	public void initialize(ServerPlayerEntity player) {
+		impl = ServerPlayNetworking.canSend(player, UpdateUIPacket.ID)
+			   ? new CustomSidebarImpl()
+			   : new VanillaSidebarImpl();
+		impl.initialize(player);
+	}
 
 	public void tick(ServerPlayerEntity p) {
 		var gp = GamePlayer.cast(p);
@@ -111,14 +121,19 @@ public final class ServerSidebar {
 
 		// set the real line count
 		if (count != previousLength) {
+			if (impl.truncateIsLossy()) {
+				lineDiffer.truncate(count);
+			}
 			buf.set(0, truncate(count));
 			previousLength = count;
 		} else {
 			buf = buf.subList(1, buf.size());
 		}
 
-		LOGGER.log(Level.INFO, n -> "Sending " + n + " sidebar updates", buf.size());
+		if (!buf.isEmpty()) {
+			LOGGER.log(Level.INFO, n -> "Sending " + n + " sidebar updates", buf.size());
 
-		ServerPlayNetworking.send(p, new UpdateUIPacket(buf));
+			impl.sendUpdates(p, buf);
+		}
 	}
 }

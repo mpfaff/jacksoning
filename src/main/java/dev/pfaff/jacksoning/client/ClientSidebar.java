@@ -30,6 +30,7 @@ public final class ClientSidebar {
 	public static void render(DrawContext context, RenderTickCounter tickCounter) {
 		var lines = ClientSidebar.lines;
 		var l = lines.size();
+		if (l == 0) return;
 		var linesArray = lines.a();
 		var alignments = ClientSidebar.alignments;
 		var widthBuffer = ClientSidebar.widthBuffer;
@@ -55,7 +56,10 @@ public final class ClientSidebar {
 		int paddedX = startX + padding.left();
 		for (var i = 0; i < l; i++) {
 			var line = linesArray[i];
-			if (line == null) continue;
+			if (line == null) {
+				y += fontHeight;
+				continue;
+			}
 			int x = paddedX;
 			var align = alignments[i];
 			if (align != null) {
@@ -87,7 +91,6 @@ public final class ClientSidebar {
 		var len = lines.size();
 		var linesArray = lines.a();
 		for (var command : packet.commands()) {
-			JacksoningClient.LOGGER.log(Level.DEBUG, () -> "Received sidebar command: " + command);
 			switch (command) {
 				case SidebarCommand.Truncate cmd -> {
 					var newLinesArray = lines.ensureCapacityAndReturnArray(len = cmd.length());
