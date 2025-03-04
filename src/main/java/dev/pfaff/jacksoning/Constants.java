@@ -30,6 +30,7 @@ public final class Constants {
 																						   EntityAttributes.ARMOR);
 	public static final Identifier MODIFIER_JACKSON_MAX_HEALTH = Identifier.of(MOD_ID, "jackson_max_health");
 	public static final Identifier MODIFIER_MISTRESS_MAX_HEALTH = Identifier.of(MOD_ID, "mistress_max_health");
+	public static final Identifier MODIFIER_PSY_MAX_HEALTH = Identifier.of(MOD_ID, "psy_max_health");
 	public static final Identifier MODIFIER_UPGRADE_MAX_HEALTH = Identifier.of(MOD_ID, "upgrade_max_health");
 	public static final Identifier MODIFIER_UPGRADE_SPEED = Identifier.of(MOD_ID, "upgrade_speed");
 	public static final Identifier MODIFIER_UPGRADE_ATTACK_DAMAGE = Identifier.of(MOD_ID, "upgrade_attack_damage");

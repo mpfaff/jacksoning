@@ -1,5 +1,8 @@
 package dev.pfaff.jacksoning.server;
 
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import dev.pfaff.jacksoning.config.StateField;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
@@ -12,7 +15,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.List;
 
 import static dev.pfaff.jacksoning.server.GameState.TIME_NOT_STARTED;
-import static dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper.containerField;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_BOOL;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_LONG;
@@ -25,16 +27,30 @@ public final class GameStateInner implements Container {
 
 	private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
-	private static final ContainerCodecHelper<GameStateInner> CODEC = ContainerCodecHelper.by(List.of(
-		containerField(LOOKUP, "devMode", NBT_BOOL.or(false)),
+	public static final List<StateField<?>> FIELDS = List.of(
+		new StateField<>(LOOKUP, "devMode", NBT_BOOL, false).configurable(BoolArgumentType.bool(), boolean.class),
+		new StateField<>(LOOKUP, "spawnDelayMJ", NBT_INT, 20 * 30 * 5).configurable(IntegerArgumentType.integer(0), int.class),
+		new StateField<>(LOOKUP, "respawnCooldown", NBT_INT, 20 * 15).configurable(IntegerArgumentType.integer(0), int.class),
+		new StateField<>(LOOKUP, "initialEmeraldsMJ", NBT_INT, 12).configurable(IntegerArgumentType.integer(0), int.class),
+		new StateField<>(LOOKUP, "initialEmeraldsUN", NBT_INT, 12).configurable(IntegerArgumentType.integer(0), int.class),
 
-		containerField(LOOKUP, "time", NBT_LONG.or(INIT_TIME)),
-		containerField(LOOKUP, "grooveGifts", NBT_INT.or(INIT_GROOVE_GIFTS)),
-		containerField(LOOKUP, "economy", NBT_INT.or(INIT_ECONOMY))
+		new StateField<>(LOOKUP, "time", NBT_LONG, INIT_TIME),
+		new StateField<>(LOOKUP, "grooveGifts", NBT_INT, INIT_GROOVE_GIFTS),
+		new StateField<>(LOOKUP, "economy", NBT_INT, INIT_ECONOMY)
 		//containerField(LOOKUP, "zoneBeacons", NBT_FLAT_BLOCK_POS_LIST.or(INIT_ZONE_BEACONS), "zone_beacons"),
-	));
+	);
+
+	private static final ContainerCodecHelper<GameStateInner> CODEC = ContainerCodecHelper.by(
+		FIELDS.stream()
+			  .map(StateField::buildContainerField)
+			  .toList()
+	);
 
 	private boolean devMode;
+	private int spawnDelayMJ;
+	private int respawnCooldown;
+	private int initialEmeraldsMJ;
+	private int initialEmeraldsUN;
 
 	private long time;
 	private int grooveGifts;
@@ -72,6 +88,11 @@ public final class GameStateInner implements Container {
 		persistentState.setDirty(false);
 	}
 
+	public void resetConfig() throws CodecException {
+		CODEC.read(NbtCompound.empty(), this);
+		persistentState.setDirty(true);
+	}
+
 	/**
 	 * Reduces cooldowns, ignores some checks.
 	 */
@@ -83,6 +104,50 @@ public final class GameStateInner implements Container {
 		if (devMode != this.devMode) {
 			persistentState.markDirty();
 			this.devMode = devMode;
+		}
+	}
+
+	public int spawnDelayMJ() {
+		return spawnDelayMJ;
+	}
+
+	public void spawnDelayMJ(int ticks) {
+		if (ticks != this.spawnDelayMJ) {
+			persistentState.markDirty();
+			this.spawnDelayMJ = ticks;
+		}
+	}
+
+	public int respawnCooldown() {
+		return respawnCooldown;
+	}
+
+	public void respawnCooldown(int ticks) {
+		if (ticks != this.respawnCooldown) {
+			persistentState.markDirty();
+			this.respawnCooldown = ticks;
+		}
+	}
+
+	public int initialEmeraldsMJ() {
+		return initialEmeraldsMJ;
+	}
+
+	public void initialEmeraldsMJ(int count) {
+		if (count != this.initialEmeraldsMJ) {
+			persistentState.markDirty();
+			this.initialEmeraldsMJ = count;
+		}
+	}
+
+	public int initialEmeraldsUN() {
+		return initialEmeraldsUN;
+	}
+
+	public void initialEmeraldsUN(int count) {
+		if (count != this.initialEmeraldsUN) {
+			persistentState.markDirty();
+			this.initialEmeraldsUN = count;
 		}
 	}
 

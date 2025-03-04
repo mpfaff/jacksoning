@@ -22,7 +22,7 @@ import static dev.pfaff.jacksoning.Constants.LABEL_ROLE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GROOVE_DROP_NUMBER_STYLE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_FALSE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_TRUE;
-import static dev.pfaff.jacksoning.server.JacksoningServer.LOGGER;
+import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
 import static dev.pfaff.jacksoning.sidebar.SidebarCommand.setLine;
 import static dev.pfaff.jacksoning.sidebar.SidebarCommand.truncate;
 

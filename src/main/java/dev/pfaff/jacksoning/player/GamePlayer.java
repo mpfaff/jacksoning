@@ -7,12 +7,9 @@ import dev.pfaff.jacksoning.mixin.AccessorEntity;
 import dev.pfaff.jacksoning.mixin.AccessorFireworkRocketEntity;
 import dev.pfaff.jacksoning.mixin.AccessorHungerManager;
 import dev.pfaff.jacksoning.server.IGame;
-import dev.pfaff.jacksoning.server.JacksoningServer;
 import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.server.sidebar.ServerSidebar;
 import dev.pfaff.jacksoning.util.VecUtil;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.WrittenBookContentComponent;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.SpawnReason;
@@ -29,14 +26,11 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.RawFilteredPair;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.GameMode;
 import org.slf4j.event.Level;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -44,6 +38,8 @@ import static dev.pfaff.jacksoning.Config.jacksonBaseHealthBoost;
 import static dev.pfaff.jacksoning.Config.jacksonZoneRadius;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_MISTRESS_MAX_HEALTH;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MAX_HEALTH;
+import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
 import static dev.pfaff.jacksoning.player.PlayerData.RESPAWN_TIME_SPAWNED;
 
 public final class GamePlayer {
@@ -80,12 +76,12 @@ public final class GamePlayer {
 	}
 
 	public void setRole(PlayerRole role) {
-		JacksoningServer.LOGGER.log(Level.INFO, () -> "Setting role of " + this + " to " + role);
+		LOGGER.log(Level.INFO, () -> "Setting role of " + this + " to " + role);
 		roleState(role.newState());
 	}
 
 	public void setInitRole(PlayerRole role) {
-		JacksoningServer.LOGGER.log(Level.INFO, () -> "Setting init role of " + this + " to " + role);
+		LOGGER.log(Level.INFO, () -> "Setting init role of " + this + " to " + role);
 		data().initRole = role;
 		setRole(role);
 	}
@@ -164,6 +160,21 @@ public final class GamePlayer {
 									  EntityAttributeModifier.Operation.ADD_VALUE);
 					}
 					case UNLeader -> {
+						int unLeaderCount = 0;
+						int mistressCount = 0;
+						for (var p : game().players()) {
+							switch (cast(p).roleState().role()) {
+								case UNLeader -> unLeaderCount++;
+								case Mistress -> mistressCount++;
+								default -> {}
+							}
+						}
+						if (unLeaderCount == 1) {
+							applyModifier(EntityAttributes.MAX_HEALTH,
+										  MODIFIER_PSY_MAX_HEALTH,
+										  20.0 + 8.0 * mistressCount,
+										  EntityAttributeModifier.Operation.ADD_VALUE);
+						}
 					}
 					case Mistress -> {
 						applyModifier(EntityAttributes.MAX_HEALTH,
@@ -241,7 +252,6 @@ public final class GamePlayer {
 					} else {
 						setRole(PlayerRole.Mistress);
 						asMc().getInventory().dropAll();
-						giveKit();
 					}
 				}
 				default -> {
@@ -249,7 +259,7 @@ public final class GamePlayer {
 			}
 		}
 
-		respawnPlayer(g.state().respawnCooldown());
+		respawnPlayer(g.state().inner.respawnCooldown());
 	}
 
 	private void onJacksonFinalKill() {
@@ -290,40 +300,17 @@ public final class GamePlayer {
 		asMc().setHealth(asMc().getMaxHealth());
 	}
 
-	static final List<RawFilteredPair<Text>> BOOK_PAGES = List.of(
-		RawFilteredPair.of(Text.of("STEP 1:\nPLACING THE TURRET\nright click the turret on the block you want to turret on. \n\nThe turret must rest on the top of blocks. they cannot stick to the bottom or sides of blocks.\n\nTurrets obey gravity,\nand can ride minecart")),
-		RawFilteredPair.of(Text.of("STEP 2:\nMOVING THAT GEAR UP\nShift + right click the \nturret to access it's \nsettings. \nClick \"dismantle turret\" to move it. It will drop as an item. It will drop it's inventory. It will keep it's hp.")),
-		RawFilteredPair.of(Text.of("STEP 3:\nTARGETING JACKSON\nShift + right click the turret to access settings. Type \"player\" (caps sensitive) into the text box, and press \"add new entity type to target list\". The text box should empty itself. Then press \"claim this turret\" to prevent hijacking.")),
-		RawFilteredPair.of(Text.of("STEP 4:\nAMMO\nThe turrets require ammo. \n\nCobble turrets need cobblestone and Brick turrets need bricks (crafting material, not block).\n\nright click the turrets to access their ammo storage and fill them.")),
-		RawFilteredPair.of(Text.of("STEP 5:\nREPAIRING\nShift + right click the turret while holding a titanium ingot to repair the turret."))
-	);
+	public void giveKit(int unLeaderCount) {
+		var g = game();
 
-	public void giveKit() {
 		var inv = asMc().getInventory();
 		inv.clear();
 		switch (data().role()) {
 			case UNLeader -> {
-				inv.armor.set(3, new ItemStack(Items.LEATHER_HELMET));
-				inv.armor.set(2, new ItemStack(Items.LEATHER_CHESTPLATE));
-				inv.armor.set(1, new ItemStack(Items.LEATHER_LEGGINGS));
-				inv.armor.set(0, new ItemStack(Items.LEATHER_BOOTS));
-				var book = new ItemStack(Items.WRITTEN_BOOK);
-				book.set(DataComponentTypes.WRITTEN_BOOK_CONTENT, new WrittenBookContentComponent(RawFilteredPair.of("TURRET MANUAL"), "samplest", 0, BOOK_PAGES, true));
-				inv.insertStack(book);
-				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));
-				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));
-				inv.insertStack(new ItemStack(Items.COBBLESTONE, 64));
-				inv.insertStack(new ItemStack(Items.STONE_AXE));
-				inv.insertStack(new ItemStack(Items.IRON_PICKAXE));
-				inv.insertStack(new ItemStack(Items.BREAD, 16));
+				inv.insertStack(new ItemStack(Items.EMERALD, g.state().inner.initialEmeraldsUN()));
 			}
 			case Jackson -> {
-				inv.insertStack(new ItemStack(Items.WOODEN_SWORD));
-				inv.insertStack(new ItemStack(Items.WOODEN_AXE));
-				inv.insertStack(new ItemStack(Items.WOODEN_PICKAXE));
-				inv.insertStack(new ItemStack(Items.WOODEN_SHOVEL));
-				inv.insertStack(new ItemStack(Items.BREAD, 15));
-				inv.insertStack(new ItemStack(Items.COBBLESTONE, 32));
+				inv.insertStack(new ItemStack(Items.EMERALD, g.state().inner.initialEmeraldsMJ() * unLeaderCount));
 			}
 			case Mistress -> {
 			}

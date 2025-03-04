@@ -2,7 +2,6 @@ package dev.pfaff.jacksoning.server;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -13,6 +12,8 @@ import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.server.shop.PurchaseResult;
 import dev.pfaff.jacksoning.server.shop.ShopScreenHandler;
 import dev.pfaff.jacksoning.server.shop.ShopState;
+import dev.pfaff.jacksoning.util.codec.CodecException;
+import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -27,6 +28,7 @@ import org.slf4j.event.Level;
 import java.util.Objects;
 
 import static dev.pfaff.jacksoning.Constants.MOD_ID;
+import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
@@ -48,7 +50,7 @@ public final class Commands {
 			} catch (CommandSyntaxException e) {
 				throw e;
 			} catch (Throwable e) {
-				JacksoningServer.LOGGER.log(Level.ERROR, "'/" + context.getInput() + "' threw an exception", e);
+				LOGGER.log(Level.ERROR, "'/" + context.getInput() + "' threw an exception", e);
 				if (IGame.cast(context.getSource().getServer()).state().devMode()) {
 					context.getSource().sendError(Text.translatable("command.failed"));
 					context.getSource().sendError(Text.of(e.toString()));
@@ -88,6 +90,48 @@ public final class Commands {
 	public static void register(CommandDispatcher<ServerCommandSource> dispatcher,
 								CommandRegistryAccess registryAccess,
 								CommandManager.RegistrationEnvironment environment) {
+		var configCommand = literal("config")
+			.then(literal("reset").executes(context -> {
+				try {
+					IGame.cast(context.getSource().getServer()).state().inner.resetConfig();
+				} catch (CodecException e) {
+					context.getSource().sendError(Text.of(e.toString()));
+					return 1;
+				}
+				return 0;
+			}));
+		for (var field : GameStateInner.FIELDS) {
+			var configProps = field.configProps();
+			if (configProps == null) continue;
+			configCommand = configCommand.then(
+				literal(field.field())
+					.executes(catchingIllegalState(context -> {
+						var g = IGame.cast(context.getSource().getServer());
+						Object value;
+						try {
+							value = field.containerField().getter().get(g.state().inner);
+						} catch (CodecException e) {
+							context.getSource().sendError(Text.of(e.toString()));
+							return 1;
+						}
+						context.getSource().sendMessage(Text.of(field.field() + ": " + value));
+						return 0;
+					}))
+					.then(argument("value", configProps.argumentType()).executes(catchingIllegalState(context -> {
+						Object value = context.getArgument("value", configProps.clazz());
+						var g = IGame.cast(context.getSource().getServer());
+						try {
+							((ContainerCodecHelper.FieldSetter<GameStateInner, Object>) field.containerField().setter()).set(g.state().inner, value);
+						} catch (CodecException e) {
+							context.getSource().sendError(Text.of(e.toString()));
+							return 1;
+						}
+						g.state().inner.persistentState.markDirty();
+						context.getSource().sendMessage(Text.of(field.field() + ": " + value));
+						return 0;
+					})))
+			);
+		}
 		dispatcher.register(literal(MOD_ID).then(literal("start").executes(catchingIllegalState(context -> {
 			IGame.cast(context.getSource().getServer()).state().start(context.getSource().getServer());
 			return 0;
@@ -106,11 +150,7 @@ public final class Commands {
 			int addit = IntegerArgumentType.getInteger(context, "addit");
 			IGame.cast(context.getSource().getServer()).state().boostEconomy(addit);
 			return 0;
-		})))).then(literal("devMode").then(argument("enable", BoolArgumentType.bool()).executes(catchingIllegalState(context -> {
-			boolean enable = BoolArgumentType.getBool(context, "enable");
-			IGame.cast(context.getSource().getServer()).state().devMode(enable);
-			return 0;
-		})))));
+		})))).then(configCommand));
 		dispatcher.register(literal("shop").requires(ServerCommandSource::isExecutedByPlayer).executes(catchingIllegalState(context -> {
 			var shop = getShop(context);
 			var p = Objects.requireNonNull(context.getSource().getPlayer());

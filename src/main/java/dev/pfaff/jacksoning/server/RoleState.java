@@ -1,8 +1,8 @@
 package dev.pfaff.jacksoning.server;
 
 import dev.pfaff.jacksoning.PlayerRole;
-import dev.pfaff.jacksoning.server.shop.ShopState;
 import dev.pfaff.jacksoning.server.shop.ShopItems;
+import dev.pfaff.jacksoning.server.shop.ShopState;
 import dev.pfaff.jacksoning.util.codec.Codec;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
@@ -16,6 +16,7 @@ import org.slf4j.event.Level;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
+import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
 import static dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper.containerField;
 import static dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper.containerFieldInPlace;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_BOOL;
@@ -34,7 +35,7 @@ public abstract sealed class RoleState implements Container {
 		state.readNbt(r);
 		return state;
 	})).orElse((e, r) -> {
-		JacksoningServer.LOGGER.log(Level.ERROR, "Invalid role state", e);
+		LOGGER.log(Level.ERROR, "Invalid role state", e);
 		return PlayerRole.DEFAULT.newState();
 	});
 

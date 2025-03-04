@@ -84,14 +84,6 @@ public final class GameState {
 		return devMode();
 	}
 
-	public int respawnCooldown() {
-		return devMode() ? 20 * 5 : 20 * 30 * 5;
-	}
-
-	public int jacksonSpawnDelay() {
-		return devMode() ? 20 * 5 : 20 * 60 * 5;
-	}
-
 	/**
 	 * Whether the game has ended.
 	 */
@@ -153,8 +145,8 @@ public final class GameState {
 		server.getOverworld().setTimeOfDay(8000);
 		for (var p : IGame.cast(server).players()) {
 			var gp = GamePlayer.cast(p);
-			gp.respawnPlayer(gp.data().role() == PlayerRole.Jackson ? jacksonSpawnDelay() : 0);
-			gp.giveKit();
+			gp.respawnPlayer(gp.data().role() == PlayerRole.Jackson ? inner.spawnDelayMJ() : 0);
+			gp.giveKit(unLeaderCount);
 		}
 
 		//var spawnPos255 = server.getOverworld().getSpawnPos().withY(255);

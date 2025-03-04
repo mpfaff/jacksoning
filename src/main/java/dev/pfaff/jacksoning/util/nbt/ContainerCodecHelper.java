@@ -107,8 +107,6 @@ public interface ContainerCodecHelper<T> {
 	}
 
 	final class ContainerFieldBuilder<T, R> {
-		private static final Object NULL_SENTINEL = new Object();
-
 		private final MethodHandle getter;
 		private final MethodHandle setter;
 		private final boolean skipNulls;

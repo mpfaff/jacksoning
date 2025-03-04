@@ -16,8 +16,7 @@
       "dev.pfaff.jacksoning.client.JacksoningClient"
     ],
     "main": [
-      "dev.pfaff.jacksoning.Jacksoning",
-      "dev.pfaff.jacksoning.server.JacksoningServer"
+      "dev.pfaff.jacksoning.Jacksoning"
     ]
   },
   "mixins": [
