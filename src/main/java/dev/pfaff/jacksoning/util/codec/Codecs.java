@@ -12,7 +12,7 @@ public final class Codecs {
 	public static <T extends Enum<T>> Codec<T, String> enumAsString(Class<T> clazz, Function<T, String> id) {
 		var byName = enumByNameMap(clazz, id);
 		var names = List.copyOf(byName.values()).toString();
-		return Codec.by(id, r -> {
+		return Codec.by(Coder.adapt(id), r -> {
 			var t = byName.get(r);
 			if (t == null) throw new CodecException("Expected one of " + names + ", found " + r);
 			return t;
@@ -27,7 +27,7 @@ public final class Codecs {
 
 	public static <T extends Enum<T>> Codec<T, Integer> enumAsInt(Class<T> clazz, Function<T, Integer> id) {
 		var values = List.of(clazz.getEnumConstants());
-		return Codec.by(id, r -> {
+		return Codec.by(Coder.adapt(id), r -> {
 			if (r < 0 || r >= values.size()) {
 				throw new CodecException("Expected a value in the range [0, " + values.size() + "), found " + r);
 			}

@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning.server.shop;
 
-import dev.pfaff.jacksoning.server.GamePlayer;
+import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.server.screen.InteractiveScreenHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;

@@ -1,16 +1,19 @@
 package dev.pfaff.jacksoning.server;
 
-import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.Winner;
+import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.items.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.world.GameMode;
 
+import java.util.List;
+
 import static dev.pfaff.jacksoning.Config.grooveInterval;
-import static dev.pfaff.jacksoning.Config.jacksonSpawnDelay;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_JACKSON_WON;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_UN_WON;
 
@@ -70,11 +73,23 @@ public final class GameState {
 	}
 
 	public boolean devMode() {
-		return Config.devMode();
+		return inner.devMode();
 	}
 
 	public void devMode(boolean enable) {
 		inner.devMode(enable);
+	}
+
+	public boolean allowIncompleteCast() {
+		return devMode();
+	}
+
+	public int respawnCooldown() {
+		return devMode() ? 20 * 5 : 20 * 30 * 5;
+	}
+
+	public int jacksonSpawnDelay() {
+		return devMode() ? 20 * 5 : 20 * 60 * 5;
 	}
 
 	/**
@@ -125,13 +140,13 @@ public final class GameState {
 			}
 		}
 		if (jacksonCount != 1) {
-			Config.throwIncompleteCastError(server,
-											"Expected the one and only Michael Jackson, but " + ((jacksonCount == 0)
-																								 ? "he was nowhere to be found!"
-																								 : "there were " + jacksonCount + " of him!"));
+			throwIncompleteCastError(server,
+									 "Expected the one and only Michael Jackson, but " + ((jacksonCount == 0)
+																						  ? "he was nowhere to be found!"
+																						  : "there were " + jacksonCount + " of him!"));
 		}
 		if (unLeaderCount == 0) {
-			Config.throwIncompleteCastError(server, "Expected at least one UN leader!");
+			throwIncompleteCastError(server, "Expected at least one UN leader!");
 		}
 		inner.time(0);
 		assert isRunning();
@@ -158,6 +173,31 @@ public final class GameState {
 		resetPlayers(server);
 	}
 
+	/**
+	 * Resets ephemeral server state.
+	 */
+	private void resetServerState(MinecraftServer server) {
+		var sb = server.getScoreboard();
+		List.copyOf(sb.getTeams()).forEach(team -> {
+			switch (team.getName()) {
+				// temporarily leave these two for compatibility with the map
+				case "UN", "MJ" -> {}
+				default -> sb.removeTeam(team);
+			}
+		});
+		for (var role : PlayerRole.values()) {
+			var team = sb.addTeam(role.mcTeam);
+			team.setDisplayName(Text.translatable(role.translationKey));
+			team.setColor(switch (role) {
+				case None -> Formatting.RESET;
+				case UNLeader -> Formatting.BLUE;
+				case Jackson -> Formatting.RED;
+				case Mistress -> Formatting.BLACK;
+				case Referee -> Formatting.GRAY;
+			});
+		}
+	}
+
 	private void resetPlayers(MinecraftServer server) {
 		server.getPlayerManager().getPlayerList().forEach(p -> {
 			p.getInventory().clear();
@@ -176,7 +216,12 @@ public final class GameState {
 		} else {
 			resetPlayers(server);
 		}
+		resetServerState(server);
 		inner.init();
+	}
+
+	public void init(MinecraftServer server) {
+		resetServerState(server);
 	}
 
 	public void tick(MinecraftServer server) {
@@ -220,5 +265,15 @@ public final class GameState {
 				}
 			}
 		});
+	}
+
+	private void throwIncompleteCastError(MinecraftServer server, String message) {
+		if (allowIncompleteCast()) {
+			server.getPlayerManager().getPlayerList().forEach(p -> {
+				p.sendMessage(Text.literal(message).styled(s -> s.withColor(Formatting.YELLOW)));
+			});
+		} else {
+			throw new IllegalStateException(message);
+		}
 	}
 }

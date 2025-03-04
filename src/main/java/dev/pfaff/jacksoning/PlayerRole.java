@@ -1,6 +1,7 @@
 package dev.pfaff.jacksoning;
 
-import dev.pfaff.jacksoning.server.GamePlayer;
+import dev.pfaff.jacksoning.player.GamePlayer;
+import dev.pfaff.jacksoning.server.GameTeam;
 import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.util.codec.Codecs;
 import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
@@ -17,11 +18,11 @@ import static dev.pfaff.jacksoning.util.codec.Codecs.enumByNameMap;
 import static java.lang.invoke.MethodType.methodType;
 
 public enum PlayerRole {
-	None("none", GameMode.SPECTATOR),
-	UNLeader("un_leader", GameMode.SURVIVAL),
-	Jackson("jackson", GameMode.SURVIVAL),
-	Mistress("mistress", GameMode.SURVIVAL),
-	Referee("referee", GameMode.SPECTATOR);
+	None("none", GameMode.SPECTATOR, null),
+	UNLeader("un_leader", GameMode.SURVIVAL, GameTeam.UN),
+	Jackson("jackson", GameMode.SURVIVAL, GameTeam.Jackson),
+	Mistress("mistress", GameMode.SURVIVAL, GameTeam.Jackson),
+	Referee("referee", GameMode.SPECTATOR, null);
 
 	public static final PlayerRole DEFAULT = None;
 
@@ -34,13 +35,20 @@ public enum PlayerRole {
 
 	public final String id;
 	public final String translationKey;
+	public final String decoratedNameTranslationKey;
 	public final GameMode gameMode;
+	public final GameTeam team;
+	public final String mcTeam;
 	private final MethodHandle stateConstructor;
 
-	private PlayerRole(String id, GameMode gameMode) {
+	private PlayerRole(String id, GameMode gameMode, GameTeam team) {
 		this.id = id;
-		this.translationKey = "enum." + MOD_ID + "." + id;
+		this.translationKey = "enum." + MOD_ID + ".role." + id;
+		this.decoratedNameTranslationKey = MOD_ID + ".role.decorated_name." + id;
 		this.gameMode = gameMode;
+		this.team = team;
+		// temporarily override UN role for compatibility with the map
+		this.mcTeam = id.equals("un_leader") ? "UN" : id;
 		var l = MethodHandles.lookup();
 		try {
 			this.stateConstructor = l.findConstructor(l.findClass(RoleState.class.getCanonicalName() + "$" + name()),

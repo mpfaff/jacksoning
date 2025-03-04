@@ -1,4 +1,4 @@
-package dev.pfaff.jacksoning.server;
+package dev.pfaff.jacksoning.player;
 
 import dev.pfaff.jacksoning.Constants;
 import dev.pfaff.jacksoning.PlayerRole;
@@ -6,6 +6,9 @@ import dev.pfaff.jacksoning.Winner;
 import dev.pfaff.jacksoning.mixin.AccessorEntity;
 import dev.pfaff.jacksoning.mixin.AccessorFireworkRocketEntity;
 import dev.pfaff.jacksoning.mixin.AccessorHungerManager;
+import dev.pfaff.jacksoning.server.IGame;
+import dev.pfaff.jacksoning.server.JacksoningServer;
+import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.server.sidebar.ServerSidebar;
 import dev.pfaff.jacksoning.util.VecUtil;
 import net.minecraft.component.DataComponentTypes;
@@ -39,10 +42,9 @@ import java.util.Set;
 
 import static dev.pfaff.jacksoning.Config.jacksonBaseHealthBoost;
 import static dev.pfaff.jacksoning.Config.jacksonZoneRadius;
-import static dev.pfaff.jacksoning.Config.respawnCooldown;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_MISTRESS_MAX_HEALTH;
-import static dev.pfaff.jacksoning.server.PlayerData.RESPAWN_TIME_SPAWNED;
+import static dev.pfaff.jacksoning.player.PlayerData.RESPAWN_TIME_SPAWNED;
 
 public final class GamePlayer {
 	public final PlayerData data = new PlayerData();
@@ -141,9 +143,17 @@ public final class GamePlayer {
 		if (!game().state().isRunning() && asMc().getPos().y < -100) {
 			tpSpawn();
 		}
+
+		if (roleState().role() != PlayerRole.Referee) {
+			applyGameMode(data().isSpawned() ? data().role().gameMode : GameMode.SPECTATOR);
+		}
+
+		var sb = player.server.getScoreboard();
+		var team = sb.getTeam(roleState().role().mcTeam);
+		sb.addScoreHolderToTeam(player.getNameForScoreboard(), team);
+
 		if (game().state().isRunning()) {
 			// TODO: https://git.pfaff.dev/michael/jacksoning/issues/5
-			applyGameMode(data().isSpawned() ? data().role().gameMode : GameMode.SPECTATOR);
 			if (data().isSpawned()) {
 				keepModifiers.clear();
 				switch (data().role()) {
@@ -209,15 +219,7 @@ public final class GamePlayer {
 			switch (data().role()) {
 				case Jackson -> {
 					if (isInsideJacksonZone()) {
-						for (int i = 0; i < 20; i++) {
-							LightningEntity entity = EntityType.LIGHTNING_BOLT.create(asMc().getWorld(), SpawnReason.EVENT);
-							entity.refreshPositionAfterTeleport(asMc().getPos());
-							entity.setCosmetic(true);
-							asMc().getWorld().spawnEntity(entity);
-						}
-
-						// game over
-						g.state().gameOver(server(), Winner.UN);
+						onJacksonFinalKill();
 					}
 				}
 				case UNLeader -> {
@@ -247,7 +249,19 @@ public final class GamePlayer {
 			}
 		}
 
-		respawnPlayer(respawnCooldown());
+		respawnPlayer(g.state().respawnCooldown());
+	}
+
+	private void onJacksonFinalKill() {
+		for (int i = 0; i < 20; i++) {
+			LightningEntity entity = EntityType.LIGHTNING_BOLT.create(asMc().getWorld(), SpawnReason.EVENT);
+			entity.refreshPositionAfterTeleport(asMc().getPos());
+			entity.setCosmetic(true);
+			asMc().getWorld().spawnEntity(entity);
+		}
+
+		// game over
+		game().state().gameOver(server(), Winner.UN);
 	}
 
 	public void tpSpawn() {

@@ -1,5 +1,6 @@
 package dev.pfaff.jacksoning.server.sidebar;
 
+import dev.pfaff.jacksoning.server.IGame;
 import dev.pfaff.jacksoning.sidebar.SidebarCommand;
 import dev.pfaff.jacksoning.util.StringOrText;
 import net.minecraft.network.packet.s2c.play.ScoreboardScoreResetS2CPacket;
@@ -7,14 +8,12 @@ import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 import net.minecraft.scoreboard.ScoreboardCriterion;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.number.BlankNumberFormat;
-import net.minecraft.scoreboard.number.FixedNumberFormat;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 import java.util.List;
 import java.util.Optional;
 
-import static dev.pfaff.jacksoning.Config.devMode;
 import static dev.pfaff.jacksoning.util.Packets.scoreboardDisplayS2CPacket;
 import static dev.pfaff.jacksoning.util.Packets.scoreboardObjectiveUpdateS2CPacket;
 
@@ -104,7 +103,7 @@ public final class VanillaSidebarImpl extends SidebarImpl {
 			}
 		}
 
-		boolean devMode = devMode();
+		boolean devMode = IGame.cast(p.server).state().devMode();
 		if (titleUpdate != null || devMode != lastDevMode) {
 			if (titleUpdate != null) {
 				lastTitle = titleUpdate.asText();

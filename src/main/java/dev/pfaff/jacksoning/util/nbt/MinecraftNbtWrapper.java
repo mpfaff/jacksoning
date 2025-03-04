@@ -5,7 +5,9 @@ import net.minecraft.nbt.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-record MinecraftNbtWrapper(@NotNull net.minecraft.nbt.NbtElement nbt) implements NbtElement, NbtList, NbtCompound {
+import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_COMPOUND;
+
+public record MinecraftNbtWrapper(@NotNull net.minecraft.nbt.NbtElement nbt) implements NbtElement, NbtList, NbtCompound {
 	@Nullable
 	static MinecraftNbtWrapper of(@Nullable net.minecraft.nbt.NbtElement nbt) {
 		if (nbt == null) return null;
@@ -17,54 +19,63 @@ record MinecraftNbtWrapper(@NotNull net.minecraft.nbt.NbtElement nbt) implements
 		return NbtType.VALUES.get(nbt.getType());
 	}
 
-	@Override
-	public byte asByte() {
-		return ((NbtByte) nbt).byteValue();
+	private <T extends net.minecraft.nbt.NbtElement> T cast(Class<T> clazz, NbtType type) throws CodecException {
+		if (nbt.getClass() != clazz) {
+			throw new CodecException("The element is a " + type() + ", not a " + type);
+		}
+		return (T) nbt;
 	}
 
 	@Override
-	public short asShort() {
-		return ((NbtShort) nbt).shortValue();
+	public byte asByte() throws CodecException {
+		return cast(NbtByte.class, NbtType.BYTE).byteValue();
 	}
 
 	@Override
-	public int asInt() {
-		return ((NbtInt) nbt).intValue();
+	public short asShort() throws CodecException {
+		return cast(NbtShort.class, NbtType.SHORT).shortValue();
 	}
 
 	@Override
-	public long asLong() {
-		return ((NbtLong) nbt).longValue();
+	public int asInt() throws CodecException {
+		return cast(NbtInt.class, NbtType.INT).intValue();
 	}
 
 	@Override
-	public float asFloat() {
-		return ((NbtFloat) nbt).floatValue();
+	public long asLong() throws CodecException {
+		return cast(NbtLong.class, NbtType.LONG).longValue();
 	}
 
 	@Override
-	public double asDouble() {
-		return ((NbtDouble) nbt).doubleValue();
+	public float asFloat() throws CodecException {
+		return cast(NbtFloat.class, NbtType.FLOAT).floatValue();
 	}
 
 	@Override
-	public byte[] asByteArray() {
-		return ((NbtByteArray) nbt).getByteArray();
+	public double asDouble() throws CodecException {
+		return cast(NbtDouble.class, NbtType.DOUBLE).doubleValue();
 	}
 
 	@Override
-	public String asString() {
-		return ((NbtString) nbt).asString();
+	public byte[] asByteArray() throws CodecException {
+		return cast(NbtByteArray.class, NbtType.BYTE_ARRAY).getByteArray();
 	}
 
 	@Override
-	public NbtList asList() {
-		return this;
+	public String asString() throws CodecException {
+		return cast(NbtString.class, NbtType.STRING).asString();
 	}
 
 	@Override
-	public NbtCompound asCompound() {
-		return this;
+	public NbtList asList() throws CodecException {
+		if (nbt instanceof net.minecraft.nbt.NbtList) return this;
+		throw new CodecException("The element is a " + type() + ", not a " + NbtType.LIST);
+	}
+
+	@Override
+	public NbtCompound asCompound() throws CodecException {
+		if (nbt instanceof net.minecraft.nbt.NbtCompound) return this;
+		throw new CodecException("The element is a " + type() + ", not a " + NbtType.COMPOUND);
 	}
 
 	@Override
@@ -86,13 +97,22 @@ record MinecraftNbtWrapper(@NotNull net.minecraft.nbt.NbtElement nbt) implements
 	}
 
 	@Override
-	public NbtElement get(String key) throws CodecException {
+	public NbtElement get(String key) {
 		return of(asMcCompound().get(key));
 	}
 
 	@Override
 	public void put(String key, NbtElement value) {
 		asMcCompound().put(key, ((MinecraftNbtWrapper) value).nbt);
+	}
+
+	@Override
+	public NbtCompound getOrPutCompound(String key) throws CodecException {
+		var compound = get(key);
+		if (compound != null) return NBT_COMPOUND.fromR(compound);
+		var newCompound = new MinecraftNbtWrapper(new net.minecraft.nbt.NbtCompound());
+		put(key, newCompound);
+		return newCompound;
 	}
 
 	@Override
@@ -106,7 +126,7 @@ record MinecraftNbtWrapper(@NotNull net.minecraft.nbt.NbtElement nbt) implements
 	}
 
 	@Override
-	public NbtElement get(int index) throws CodecException {
+	public NbtElement get(int index) {
 		return of(asMcList().get(index));
 	}
 

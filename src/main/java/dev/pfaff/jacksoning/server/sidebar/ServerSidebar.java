@@ -1,9 +1,9 @@
 package dev.pfaff.jacksoning.server.sidebar;
 
-import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.packet.UpdateUIPacket;
 import dev.pfaff.jacksoning.server.GameLifecycle;
-import dev.pfaff.jacksoning.server.GamePlayer;
+import dev.pfaff.jacksoning.player.GamePlayer;
+import dev.pfaff.jacksoning.server.IGame;
 import dev.pfaff.jacksoning.sidebar.Alignment;
 import dev.pfaff.jacksoning.sidebar.SidebarCommand;
 import dev.pfaff.jacksoning.util.ChangeNotifier;
@@ -17,8 +17,8 @@ import org.slf4j.event.Level;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.pfaff.jacksoning.Constants.LABEL_ROLE;
 import static dev.pfaff.jacksoning.Constants.GROOVE_VALUE_STYLE;
+import static dev.pfaff.jacksoning.Constants.LABEL_ROLE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GROOVE_DROP_NUMBER_STYLE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_FALSE;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_TRUE;
@@ -33,7 +33,7 @@ public final class ServerSidebar {
 	public boolean insideJacksonZoneCached = false;
 
 	private int previousLength = 0;
-	private final DiffingComputerList<Void> lineDiffer = new DiffingComputerList<>();
+	private final DiffingComputerList lineDiffer = new DiffingComputerList();
 
 	public void initialize(ServerPlayerEntity player) {
 		impl = ServerPlayNetworking.canSend(player, UpdateUIPacket.ID)
@@ -112,7 +112,7 @@ public final class ServerSidebar {
 			return null;
 		}, buf);
 
-		if (Config.devMode()) {
+		if (IGame.cast(p.server).state().devMode()) {
 			lineDiffer.get(count++, (ctx, i) -> {
 				ctx.add(setLine(i, "Dev mode"));
 				return null;

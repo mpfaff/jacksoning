@@ -1,7 +1,8 @@
 package dev.pfaff.jacksoning.mixin;
 
-import dev.pfaff.jacksoning.server.GamePlayer;
-import dev.pfaff.jacksoning.server.IGamePlayer;
+import dev.pfaff.jacksoning.player.GamePlayer;
+import dev.pfaff.jacksoning.server.GameTeam;
+import dev.pfaff.jacksoning.player.IGamePlayer;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.nbt.NbtCompound;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static dev.pfaff.jacksoning.server.PlayerData.PLAYER_NBT_KEY;
+import static dev.pfaff.jacksoning.player.PlayerData.PLAYER_NBT_KEY;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_COMPOUND;
 
 @Mixin(ServerPlayerEntity.class)
@@ -30,6 +31,11 @@ public abstract class MixinServerPlayerEntity implements IGamePlayer {
 	@Override
 	public GamePlayer gamePlayer() {
 		return gamePlayer;
+	}
+
+	@Override
+	public GameTeam gameTeam() {
+		return IGamePlayer.super.gameTeam();
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))

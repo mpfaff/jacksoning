@@ -4,11 +4,14 @@ import dev.pfaff.jacksoning.Constants;
 import dev.pfaff.jacksoning.server.GameState;
 import dev.pfaff.jacksoning.server.IGame;
 import dev.pfaff.jacksoning.util.codec.CodecException;
+import dev.pfaff.jacksoning.util.codec.DynamicCodecs;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,6 +43,7 @@ public abstract class MixinMinecraftServer implements IGame {
 			},
 			null
 		), Constants.PERSISTENT_STATE_ID);
+		state.init((MinecraftServer) (Object) this);
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))

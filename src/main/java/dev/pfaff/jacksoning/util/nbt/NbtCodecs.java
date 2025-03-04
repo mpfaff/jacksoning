@@ -8,7 +8,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import dev.pfaff.jacksoning.util.codec.Codec;
 import dev.pfaff.jacksoning.util.codec.CodecException;
-import dev.pfaff.jacksoning.util.codec.FromR;
+import dev.pfaff.jacksoning.util.codec.Coder;
 import net.minecraft.nbt.*;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
@@ -17,51 +17,49 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Function;
 
 import static dev.pfaff.jacksoning.util.nbt.NbtType.*;
 
 public final class NbtCodecs {
 	private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
 
-	public static <T> Codec<T, NbtElement> by(Function<T, @NotNull NbtElement> toElement,
-											  FromR<T, @NotNull NbtElement> fromElement) {
-		var nullMsg = "Expected an NBT value, found null";
+	public static <T> Codec<T, NbtElement> by(Coder<T, @NotNull NbtElement> toElement,
+											  Coder<@NotNull NbtElement, T> fromElement) {
 		return new Codec<>() {
 			@Override
 			@NotNull
-			public NbtElement toR(T value) {
+			public NbtElement toR(T value) throws CodecException {
 				return toElement.apply(value);
 			}
 
 			@Override
 			public T fromR(@Nullable NbtElement element) throws CodecException {
-				if (element == null) throw new CodecException(nullMsg);
-				return fromElement.fromR(element);
+				if (element == null) throw new CodecException("Expected an NBT value, found null");
+				return fromElement.apply(element);
 			}
 		};
 	}
 
 	public static <T> Codec<T, NbtElement> by(NbtType type,
-											  Function<T, NbtElement> toElement,
-											  FromR<T, NbtElement> fromElement) {
+											  Coder<T, NbtElement> toElement,
+											  Coder<NbtElement, T> fromElement) {
 		return by(toElement, element -> {
 			if (element.type() != type) {
 				throw new CodecException("Expected an NBT value of type " + type + ", found " + element.type());
 			}
-			return fromElement.fromR(element);
+			return fromElement.apply(element);
 		});
 	}
 
 	public static <T> Codec<T, NbtElement> by(NbtTypeSet types,
-											  Function<T, NbtElement> toElement,
-											  FromR<T, NbtElement> fromElement) {
+											  Coder<T, NbtElement> toElement,
+											  Coder<NbtElement, T> fromElement) {
 		var typeNames = types.stream().map(NbtType::name).toList().toString();
 		return by(toElement, element -> {
 			if (!types.contains(element.type())) {
 				throw new CodecException("Expected one of " + typeNames + ", found " + element.type());
 			}
-			return fromElement.fromR(element);
+			return fromElement.apply(element);
 		});
 	}
 

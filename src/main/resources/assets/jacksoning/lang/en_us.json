@@ -1,9 +1,16 @@
 {
-  "enum.jacksoning.none": "None",
-  "enum.jacksoning.un_leader": "UN Leader",
-  "enum.jacksoning.jackson": "Jackson",
-  "enum.jacksoning.mistress": "Mistress",
-  "enum.jacksoning.referee": "Referee",
+  "enum.jacksoning.role.none": "None",
+  "enum.jacksoning.role.un_leader": "UN Leader",
+  "enum.jacksoning.role.jackson": "Jackson",
+  "enum.jacksoning.role.mistress": "Mistress",
+  "enum.jacksoning.role.referee": "Referee",
+  "jacksoning.role.decorated_name.none": "%s",
+  "jacksoning.role.decorated_name.un_leader": "[UN] %s",
+  "jacksoning.role.decorated_name.jackson": "Jackson",
+  "jacksoning.role.decorated_name.mistress": "[Mistress] %s",
+  "jacksoning.role.decorated_name.referee": "[Referee] %s",
+  "enum.jacksoning.team.jackson": "Jackson's",
+  "enum.jacksoning.team.un": "The UN",
   "label.jacksoning.role": "Role",
   "message.jacksoning.game_lifecycle.not_started": "Awaiting Jackson",
   "message.jacksoning.game_lifecycle.running": "Rocking",
@@ -23,5 +30,6 @@
   "message.jacksoning.shop.not_spawned": "You must be spawned in to use the shop.",
   "argument.jacksoning.role.invalid": "Invalid role '%s'",
   "key.jacksoning.referee": "Open Referee Panel",
-  "category.jacksoning": "The Jacksoning"
+  "category.jacksoning": "The Jacksoning",
+  "entity.jacksoning.turret.name": "%s Turret"
 }

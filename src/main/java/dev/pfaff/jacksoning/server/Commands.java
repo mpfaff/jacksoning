@@ -8,8 +8,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.server.shop.PurchaseResult;
 import dev.pfaff.jacksoning.server.shop.ShopScreenHandler;
 import dev.pfaff.jacksoning.server.shop.ShopState;
@@ -49,7 +49,7 @@ public final class Commands {
 				throw e;
 			} catch (Throwable e) {
 				JacksoningServer.LOGGER.log(Level.ERROR, "'/" + context.getInput() + "' threw an exception", e);
-				if (Config.devMode()) {
+				if (IGame.cast(context.getSource().getServer()).state().devMode()) {
 					context.getSource().sendError(Text.translatable("command.failed"));
 					context.getSource().sendError(Text.of(e.toString()));
 					return 1;

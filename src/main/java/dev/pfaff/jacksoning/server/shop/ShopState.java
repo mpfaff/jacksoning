@@ -1,7 +1,7 @@
 package dev.pfaff.jacksoning.server.shop;
 
 import dev.pfaff.jacksoning.items.Items;
-import dev.pfaff.jacksoning.server.GamePlayer;
+import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
@@ -87,7 +87,7 @@ public final class ShopState implements Container {
 	}
 
 	@Override
-	public void writeNbt(NbtCompound nbt) {
+	public void writeNbt(NbtCompound nbt) throws CodecException {
 		for (var entry : levels.object2IntEntrySet()) {
 			if (entry.getIntValue() == 0) continue;
 			nbt.putAs(entry.getKey(), NBT_INT, entry.getIntValue());

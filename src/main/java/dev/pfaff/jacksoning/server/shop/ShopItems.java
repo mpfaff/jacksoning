@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning.server.shop;
 
-import dev.pfaff.jacksoning.server.GamePlayer;
+import dev.pfaff.jacksoning.player.GamePlayer;
 import it.unimi.dsi.fastutil.ints.Int2DoubleFunction;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.PotionContentsComponent;

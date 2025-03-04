@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning.mixin;
 
-import dev.pfaff.jacksoning.server.IGamePlayer;
+import dev.pfaff.jacksoning.player.IGamePlayer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.CraftingScreenHandler;
 import org.spongepowered.asm.mixin.Mixin;

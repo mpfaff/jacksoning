@@ -2,6 +2,7 @@ package dev.pfaff.jacksoning;
 
 import com.mojang.logging.LogUtils;
 import dev.pfaff.jacksoning.blocks.Blocks;
+import dev.pfaff.jacksoning.entities.Entities;
 import dev.pfaff.jacksoning.items.Items;
 import dev.pfaff.jacksoning.packet.UpdateUIPacket;
 import dev.pfaff.jacksoning.util.LogDestupify;
@@ -15,6 +16,7 @@ public class Jacksoning implements ModInitializer {
 	public void onInitialize() {
 		Blocks.initialize();
 		Items.initialize();
+		Entities.initialize();
 
 		PayloadTypeRegistry.playS2C().register(UpdateUIPacket.ID, UpdateUIPacket.CODEC);
 	}

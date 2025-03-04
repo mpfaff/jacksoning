@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning.util.codec;
 
-import java.util.function.Function;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Codec for value-based types.
@@ -12,17 +12,30 @@ import java.util.function.Function;
  * A key aspect of a codec is that it is a narrowing mapping. Hence, the mapping can only fail in one direction, that
  * being from {@code R} to {@code T}.
  */
-public interface Codec<T, R> extends FromR<T, R> {
+public interface Codec<T, R> {
 	public T fromR(R r) throws CodecException;
-	public R toR(T t);
+	public R toR(T t) throws CodecException;
 
-	@Override
 	default Codec<T, R> or(T value) {
-		return orElse((e, r) -> value);
+		var self = this;
+		return new Codec<>() {
+			@Override
+			public T fromR(R r) {
+				try {
+					return self.fromR(r);
+				} catch (CodecException e) {
+					return value;
+				}
+			}
+
+			@Override
+			public R toR(T t) throws CodecException {
+				return self.toR(t);
+			}
+		};
 	}
 
-	@Override
-	public default Codec<T, R> orElse(OrElseFunction<T, R> f) {
+	public default Codec<T, R> orElse(Recoverer<R, T> f) {
 		var self = this;
 		return new Codec<>() {
 			@Override
@@ -30,12 +43,12 @@ public interface Codec<T, R> extends FromR<T, R> {
 				try {
 					return self.fromR(r);
 				} catch (CodecException e) {
-					return f.fromR(e, r);
+					return f.recover(e, r);
 				}
 			}
 
 			@Override
-			public R toR(T t) {
+			public R toR(T t) throws CodecException {
 				return self.toR(t);
 			}
 		};
@@ -50,21 +63,39 @@ public interface Codec<T, R> extends FromR<T, R> {
 			}
 
 			@Override
-			public R toR(U u) {
+			public R toR(U u) throws CodecException {
 				return self.toR(codecUT.toR(u));
 			}
 		};
 	}
 
-	static <T, R> Codec<T, R> by(Function<T, R> toR, FromR<T, R> fromR) {
+	/**
+	 * Skips nulls in {@link #toR}.
+	 */
+	public default Codec<T, @Nullable R> skipNulls() {
+		var self = this;
 		return new Codec<>() {
 			@Override
 			public T fromR(R r) throws CodecException {
-				return fromR.fromR(r);
+				return self.fromR(r);
 			}
 
 			@Override
-			public R toR(T t) {
+			public R toR(T t) throws CodecException {
+				return t == null ? null : self.toR(t);
+			}
+		};
+	}
+
+	static <T, R> Codec<T, R> by(Coder<T, R> toR, Coder<R, T> fromR) {
+		return new Codec<>() {
+			@Override
+			public T fromR(R r) throws CodecException {
+				return fromR.apply(r);
+			}
+
+			@Override
+			public R toR(T t) throws CodecException {
 				return toR.apply(t);
 			}
 		};
@@ -101,7 +132,7 @@ public interface Codec<T, R> extends FromR<T, R> {
 		}
 
 		@Override
-		public Codec<Object, Object> orElse(OrElseFunction<Object, Object> f) {
+		public Codec<Object, Object> orElse(Recoverer<Object, Object> f) {
 			return this;
 		}
 

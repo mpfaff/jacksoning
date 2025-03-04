@@ -1,9 +1,7 @@
 package dev.pfaff.jacksoning.server.shop;
 
-import dev.pfaff.jacksoning.server.GamePlayer;
-import dev.pfaff.jacksoning.server.JacksoningServer;
+import dev.pfaff.jacksoning.player.GamePlayer;
 import net.minecraft.item.ItemStack;
-import org.slf4j.event.Level;
 
 import java.util.List;
 import java.util.function.BiConsumer;

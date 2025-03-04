@@ -1,6 +1,7 @@
 package dev.pfaff.jacksoning.server;
 
 import com.mojang.logging.LogUtils;
+import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.util.LogDestupify;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;

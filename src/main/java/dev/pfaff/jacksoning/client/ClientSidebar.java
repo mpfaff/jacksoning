@@ -5,24 +5,22 @@ import dev.pfaff.jacksoning.sidebar.Alignment;
 import dev.pfaff.jacksoning.sidebar.SidebarCommand;
 import dev.pfaff.jacksoning.util.OpenArrayList;
 import dev.pfaff.jacksoning.util.StringOrText;
-import dev.pfaff.jacksoning.util.gui.GuiGlobals;
 import io.netty.util.internal.EmptyArrays;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
-import org.slf4j.event.Level;
+import net.minecraft.client.util.Window;
 
 import java.util.Arrays;
-
-import static dev.pfaff.jacksoning.util.gui.GuiGlobals.mcWindow;
 
 public final class ClientSidebar {
 	private static final OpenArrayList<StringOrText> lines = OpenArrayList.wrap(StringOrText.EMPTY_ARRAY);
 	private static Alignment[] alignments = Alignment.EMPTY_ARRAY;
 	private static int[] widthBuffer = EmptyArrays.EMPTY_INTS;
-//	private static final BitSet dirty = new BitSet();
 
-	private static final TextRenderer textRenderer = GuiGlobals.textRenderer;
+	private static final Window mcWindow = MinecraftClient.getInstance().getWindow();
+	private static final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
 
 	private static final EdgeInsets padding = EdgeInsets.symmetrical(4, 2);
 	private static final EdgeInsets margin = EdgeInsets.symmetrical(4, 2);
@@ -52,7 +50,7 @@ public final class ClientSidebar {
 					 y - padding.top(),
 					 endX,
 					 y + lines.size() * fontHeight + padding.bottom(),
-					 GuiGlobals.GENERIC_HUD_BACKGROUND);
+					 0x90_505050);
 		int paddedX = startX + padding.left();
 		for (var i = 0; i < l; i++) {
 			var line = linesArray[i];

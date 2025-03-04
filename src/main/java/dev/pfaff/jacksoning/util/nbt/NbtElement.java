@@ -29,18 +29,18 @@ public interface NbtElement {
 		return codec.fromR(this);
 	}
 
-	byte asByte();
-	short asShort();
-	int asInt();
-	long asLong();
-	float asFloat();
-	double asDouble();
-	byte[] asByteArray();
-	String asString();
-	NbtList asList();
-	NbtCompound asCompound();
-	int[] asIntArray();
-	long[] asLongArray();
+	byte asByte() throws CodecException;
+	short asShort() throws CodecException;
+	int asInt() throws CodecException;
+	long asLong() throws CodecException;
+	float asFloat() throws CodecException;
+	double asDouble() throws CodecException;
+	byte[] asByteArray() throws CodecException;
+	String asString() throws CodecException;
+	NbtList asList() throws CodecException;
+	NbtCompound asCompound() throws CodecException;
+	int[] asIntArray() throws CodecException;
+	long[] asLongArray() throws CodecException;
 
 	static NbtElement of(net.minecraft.nbt.NbtElement nbt) {
 		return MinecraftNbtWrapper.of(nbt);

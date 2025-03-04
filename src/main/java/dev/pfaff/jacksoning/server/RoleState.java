@@ -59,7 +59,7 @@ public abstract sealed class RoleState implements Container {
 
 	@MustBeInvokedByOverriders
 	@Override
-	public void writeNbt(NbtCompound nbt) {
+	public void writeNbt(NbtCompound nbt) throws CodecException {
 		nbt.putAs(NBT_ROLE, PlayerRole.NBT_CODEC, this.role());
 	}
 
@@ -96,7 +96,7 @@ public abstract sealed class RoleState implements Container {
 		}
 
 		@Override
-		public void writeNbt(NbtCompound nbt) {
+		public void writeNbt(NbtCompound nbt) throws CodecException {
 			super.writeNbt(nbt);
 			CODEC.write(this, nbt);
 		}
@@ -121,7 +121,7 @@ public abstract sealed class RoleState implements Container {
 		}
 
 		@Override
-		public void writeNbt(NbtCompound nbt) {
+		public void writeNbt(NbtCompound nbt) throws CodecException {
 			super.writeNbt(nbt);
 			CODEC.write(this, nbt);
 		}

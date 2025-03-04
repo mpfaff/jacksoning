@@ -1,6 +1,5 @@
 package dev.pfaff.jacksoning.server;
 
-import dev.pfaff.jacksoning.Config;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
@@ -13,10 +12,10 @@ import java.lang.invoke.MethodHandles;
 import java.util.List;
 
 import static dev.pfaff.jacksoning.server.GameState.TIME_NOT_STARTED;
+import static dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper.containerField;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_BOOL;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_LONG;
-import static dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper.containerField;
 
 public final class GameStateInner implements Container {
 	private static final long INIT_TIME = TIME_NOT_STARTED;
@@ -24,13 +23,18 @@ public final class GameStateInner implements Container {
 	private static final int INIT_ECONOMY = 1;
 	//private static final List<BlockPos> INIT_ZONE_BEACONS = List.of();
 
+	private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
 	private static final ContainerCodecHelper<GameStateInner> CODEC = ContainerCodecHelper.by(List.of(
-		containerField(MethodHandles.lookup(), "time", NBT_LONG.or(INIT_TIME), "time"),
-		containerField(MethodHandles.lookup(), "grooveGifts", NBT_INT.or(INIT_GROOVE_GIFTS), "grooveGifts"),
-		containerField(MethodHandles.lookup(), "economy", NBT_INT.or(INIT_ECONOMY), "economy"),
-		//containerField(MethodHandles.lookup(), "zoneBeacons", NBT_FLAT_BLOCK_POS_LIST.or(INIT_ZONE_BEACONS), "zone_beacons"),
-		containerField(__ -> Config.devMode(), (__, b) -> Config.devMode(b), NBT_BOOL.or(false), "dev_mode")
+		containerField(LOOKUP, "devMode", NBT_BOOL.or(false)),
+
+		containerField(LOOKUP, "time", NBT_LONG.or(INIT_TIME)),
+		containerField(LOOKUP, "grooveGifts", NBT_INT.or(INIT_GROOVE_GIFTS)),
+		containerField(LOOKUP, "economy", NBT_INT.or(INIT_ECONOMY))
+		//containerField(LOOKUP, "zoneBeacons", NBT_FLAT_BLOCK_POS_LIST.or(INIT_ZONE_BEACONS), "zone_beacons"),
 	));
+
+	private boolean devMode;
 
 	private long time;
 	private int grooveGifts;
@@ -43,7 +47,11 @@ public final class GameStateInner implements Container {
 			net.minecraft.nbt.NbtCompound nbt,
 			RegistryWrapper.WrapperLookup registries
 		) {
-			GameStateInner.this.writeNbt(NbtElement.of(nbt));
+			try {
+				GameStateInner.this.writeNbt(NbtElement.of(nbt));
+			} catch (CodecException e) {
+				throw new RuntimeException(e);
+			}
 			return nbt;
 		}
 	};
@@ -55,13 +63,27 @@ public final class GameStateInner implements Container {
 	}
 
 	@Override
-	public void writeNbt(NbtCompound nbt) {
+	public void writeNbt(NbtCompound nbt) throws CodecException {
 		CODEC.write(this, nbt);
 	}
 
 	public void readNbt(NbtCompound nbt) throws CodecException {
 		CODEC.read(nbt, this);
 		persistentState.setDirty(false);
+	}
+
+	/**
+	 * Reduces cooldowns, ignores some checks.
+	 */
+	public boolean devMode() {
+		return devMode;
+	}
+
+	public void devMode(boolean devMode) {
+		if (devMode != this.devMode) {
+			persistentState.markDirty();
+			this.devMode = devMode;
+		}
 	}
 
 	public long time() {
@@ -94,13 +116,6 @@ public final class GameStateInner implements Container {
 		if (economy != this.economy) {
 			persistentState.markDirty();
 			this.economy = economy;
-		}
-	}
-
-	public void devMode(boolean enable) {
-		if (enable != Config.devMode()) {
-			persistentState.markDirty();
-			Config.devMode(enable);
 		}
 	}
 
