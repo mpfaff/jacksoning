@@ -2,27 +2,33 @@ package dev.pfaff.jacksoning.server;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import dev.pfaff.jacksoning.config.StateField;
+import dev.pfaff.jacksoning.state.StateField;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
+import net.minecraft.command.argument.PosArgument;
+import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.PersistentState;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
+import java.util.Objects;
 
 import static dev.pfaff.jacksoning.server.GameState.TIME_NOT_STARTED;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_BOOL;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_LONG;
+import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_VEC3D;
 
 public final class GameStateInner implements Container {
 	private static final long INIT_TIME = TIME_NOT_STARTED;
-	private static final int INIT_GROOVE_GIFTS = 0;
-	private static final int INIT_ECONOMY = 1;
+	private static final long INIT_JACKSON_LAST_SEEN = 0L;
 	//private static final List<BlockPos> INIT_ZONE_BEACONS = List.of();
 
 	private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
@@ -33,10 +39,13 @@ public final class GameStateInner implements Container {
 		new StateField<>(LOOKUP, "respawnCooldown", NBT_INT, 20 * 15).configurable(IntegerArgumentType.integer(0), int.class),
 		new StateField<>(LOOKUP, "initialEmeraldsMJ", NBT_INT, 12).configurable(IntegerArgumentType.integer(0), int.class),
 		new StateField<>(LOOKUP, "initialEmeraldsUN", NBT_INT, 12).configurable(IntegerArgumentType.integer(0), int.class),
+		new StateField<>(LOOKUP, "jacksonTimeout", NBT_INT, 20 * 30).configurable(IntegerArgumentType.integer(0), int.class),
+		new StateField<>(LOOKUP, "playSpawnPoint", NBT_VEC3D.skipNulls(), null)
+			.mapContainerField(ContainerCodecHelper.ContainerField::skipNulls)
+			.configurable(Vec3ArgumentType.vec3(), PosArgument.class, GameStateInner::adaptPosArgumentArgument),
 
 		new StateField<>(LOOKUP, "time", NBT_LONG, INIT_TIME),
-		new StateField<>(LOOKUP, "grooveGifts", NBT_INT, INIT_GROOVE_GIFTS),
-		new StateField<>(LOOKUP, "economy", NBT_INT, INIT_ECONOMY)
+		new StateField<>(LOOKUP, "jacksonLastSeen", NBT_LONG, INIT_JACKSON_LAST_SEEN)
 		//containerField(LOOKUP, "zoneBeacons", NBT_FLAT_BLOCK_POS_LIST.or(INIT_ZONE_BEACONS), "zone_beacons"),
 	);
 
@@ -51,10 +60,12 @@ public final class GameStateInner implements Container {
 	private int respawnCooldown;
 	private int initialEmeraldsMJ;
 	private int initialEmeraldsUN;
+	private int jacksonTimeout;
+	@Nullable
+	private Vec3d playSpawnPoint;
 
 	private long time;
-	private int grooveGifts;
-	private int economy;
+	private long jacksonLastSeen;
 	//private List<BlockPos> zoneBeacons = List.of();
 
 	public final PersistentState persistentState = new PersistentState() {
@@ -72,10 +83,13 @@ public final class GameStateInner implements Container {
 		}
 	};
 
+	private static Vec3d adaptPosArgumentArgument(ServerCommandSource source, PosArgument pos) {
+		return pos.getPos(source);
+	}
+
 	public void init() {
 		time(INIT_TIME);
-		grooveGifts(INIT_GROOVE_GIFTS);
-		economy(INIT_ECONOMY);
+		jacksonLastSeen(INIT_JACKSON_LAST_SEEN);
 	}
 
 	@Override
@@ -151,6 +165,29 @@ public final class GameStateInner implements Container {
 		}
 	}
 
+	public int jacksonTimeout() {
+		return jacksonTimeout;
+	}
+
+	public void jacksonTimeout(int ticks) {
+		if (ticks != this.jacksonTimeout) {
+			persistentState.markDirty();
+			this.jacksonTimeout = ticks;
+		}
+	}
+
+	@Nullable
+	public Vec3d playSpawnPoint() {
+		return playSpawnPoint;
+	}
+
+	public void playSpawnPoint(@Nullable Vec3d pos) {
+		if (!Objects.equals(pos, this.playSpawnPoint)) {
+			persistentState.markDirty();
+			this.playSpawnPoint = pos;
+		}
+	}
+
 	public long time() {
 		return time;
 	}
@@ -162,25 +199,14 @@ public final class GameStateInner implements Container {
 		}
 	}
 
-	public int grooveGifts() {
-		return grooveGifts;
+	public long jacksonLastSeen() {
+		return jacksonLastSeen;
 	}
 
-	public void grooveGifts(int grooveGifts) {
-		if (grooveGifts != this.grooveGifts) {
+	public void jacksonLastSeen(long time) {
+		if (time != this.jacksonLastSeen) {
 			persistentState.markDirty();
-			this.grooveGifts = grooveGifts;
-		}
-	}
-
-	public int economy() {
-		return economy;
-	}
-
-	public void economy(int economy) {
-		if (economy != this.economy) {
-			persistentState.markDirty();
-			this.economy = economy;
+			this.jacksonLastSeen = time;
 		}
 	}
 

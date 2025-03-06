@@ -8,6 +8,7 @@ import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.GameMode;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -37,11 +38,12 @@ public enum PlayerRole {
 	public final String translationKey;
 	public final String decoratedNameTranslationKey;
 	public final GameMode gameMode;
+	@Nullable
 	public final GameTeam team;
 	public final String mcTeam;
 	private final MethodHandle stateConstructor;
 
-	private PlayerRole(String id, GameMode gameMode, GameTeam team) {
+	private PlayerRole(String id, GameMode gameMode, @Nullable GameTeam team) {
 		this.id = id;
 		this.translationKey = "enum." + MOD_ID + ".role." + id;
 		this.decoratedNameTranslationKey = MOD_ID + ".role.decorated_name." + id;

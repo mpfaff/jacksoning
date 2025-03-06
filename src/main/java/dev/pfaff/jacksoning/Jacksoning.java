@@ -40,6 +40,9 @@ public class Jacksoning implements ModInitializer {
 		ServerPlayConnectionEvents.INIT.register((handler, server) -> {
 			GamePlayer.cast(handler.player).onConnect();
 		});
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			GamePlayer.cast(handler.player).onDisconnect();
+		});
 		CommandRegistrationCallback.EVENT.register(Commands::register);
 	}
 }

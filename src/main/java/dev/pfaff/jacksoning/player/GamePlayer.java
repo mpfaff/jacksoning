@@ -2,14 +2,14 @@ package dev.pfaff.jacksoning.player;
 
 import dev.pfaff.jacksoning.Constants;
 import dev.pfaff.jacksoning.PlayerRole;
-import dev.pfaff.jacksoning.Winner;
 import dev.pfaff.jacksoning.mixin.AccessorEntity;
 import dev.pfaff.jacksoning.mixin.AccessorFireworkRocketEntity;
 import dev.pfaff.jacksoning.mixin.AccessorHungerManager;
+import dev.pfaff.jacksoning.mixin.AccessorWorld;
+import dev.pfaff.jacksoning.server.GameTeam;
 import dev.pfaff.jacksoning.server.IGame;
 import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.server.sidebar.ServerSidebar;
-import dev.pfaff.jacksoning.util.VecUtil;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.SpawnReason;
@@ -18,6 +18,7 @@ import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
@@ -27,6 +28,9 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.TypeFilter;
+import net.minecraft.util.function.LazyIterationConsumer;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.GameMode;
 import org.slf4j.event.Level;
 
@@ -34,9 +38,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static dev.pfaff.jacksoning.Config.jacksonBaseHealthBoost;
-import static dev.pfaff.jacksoning.Config.jacksonZoneRadius;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_SPEED;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_MISTRESS_MAX_HEALTH;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MAX_HEALTH;
 import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
@@ -102,9 +105,23 @@ public final class GamePlayer {
 		return this.data().role() == PlayerRole.Referee || player.hasPermissionLevel(2);
 	}
 
-	public boolean isInsideJacksonZone() {
-		var spawnPos = server().getOverworld().getSpawnPos();
-		return VecUtil.all(asMc().getBlockPos().subtract(spawnPos), dist -> Math.abs(dist) < jacksonZoneRadius());
+	public boolean isInsideNLR() {
+		// TODO: get this from an nbt value on each NLF entity
+		var radiusSq = MathHelper.square(16);
+		var consumer = new LazyIterationConsumer<IronGolemEntity>() {
+			private boolean found = false;
+
+			@Override
+			public NextIteration accept(IronGolemEntity entity) {
+				if (player.squaredDistanceTo(entity) < radiusSq) {
+					found = true;
+					return NextIteration.ABORT;
+				}
+				return NextIteration.CONTINUE;
+			}
+		};
+		forEachNLF(consumer);
+		return consumer.found;
 	}
 
 	public void applyModifier(RegistryEntry<EntityAttribute> attribute,
@@ -129,6 +146,14 @@ public final class GamePlayer {
 		sidebar.initialize(player);
 	}
 
+	public void onDisconnect() {
+		if (game().state().isRunning()) {
+			if (roleState().role() != PlayerRole.Jackson && (data().isSpawned() || roleState().role() == PlayerRole.UNLeader)) {
+				onFatalDamage();
+			}
+		}
+	}
+
 	public void tick() {
 		tickLogic();
 		sidebar.tick(player);
@@ -149,14 +174,17 @@ public final class GamePlayer {
 		sb.addScoreHolderToTeam(player.getNameForScoreboard(), team);
 
 		if (game().state().isRunning()) {
-			// TODO: https://git.pfaff.dev/michael/jacksoning/issues/5
 			if (data().isSpawned()) {
 				keepModifiers.clear();
 				switch (data().role()) {
 					case Jackson -> {
 						applyModifier(EntityAttributes.MAX_HEALTH,
 									  MODIFIER_JACKSON_MAX_HEALTH,
-									  jacksonBaseHealthBoost(),
+									  4.0 * 24.0,
+									  EntityAttributeModifier.Operation.ADD_VALUE);
+						applyModifier(EntityAttributes.MOVEMENT_SPEED,
+									  MODIFIER_JACKSON_SPEED,
+									  0.02,
 									  EntityAttributeModifier.Operation.ADD_VALUE);
 					}
 					case UNLeader -> {
@@ -187,7 +215,7 @@ public final class GamePlayer {
 				}
 				var shop = data().roleState.shop();
 				if (shop != null) {
-					shop.levels().forEach(entry -> entry.left().onTick(this, entry.rightInt()));
+					shop.forEachLevel((item, lvl) -> item.onTick(this, lvl));
 				}
 				Registries.ATTRIBUTE.streamEntries().forEach(attribute -> {
 					var inst = asMc().getAttributeInstance(attribute);
@@ -204,9 +232,6 @@ public final class GamePlayer {
 					if (data().roleState instanceof RoleState.Jackson state) {
 						if (!state.spawned) {
 							state.spawned = true;
-							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 20 * 20));
-							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 20 * 20));
-							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 20 * 20));
 							asMc().addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 20 * 20, 2));
 						}
 					}
@@ -229,7 +254,7 @@ public final class GamePlayer {
 		if (g.state().isRunning()) {
 			switch (data().role()) {
 				case Jackson -> {
-					if (isInsideJacksonZone()) {
+					if (!isNLFAlive()) {
 						onJacksonFinalKill();
 					}
 				}
@@ -248,7 +273,7 @@ public final class GamePlayer {
 							entity.refreshPositionAfterTeleport(asMc().getPos());
 							ProjectileEntity.spawn(entity, asMc().getServerWorld(), itemStack);
 						}
-						g.state().gameOver(server(), Winner.Jackson);
+						g.state().gameOver(server(), GameTeam.Jackson);
 					} else {
 						setRole(PlayerRole.Mistress);
 						asMc().getInventory().dropAll();
@@ -262,6 +287,31 @@ public final class GamePlayer {
 		respawnPlayer(g.state().inner.respawnCooldown());
 	}
 
+	private void forEachNLF(LazyIterationConsumer<IronGolemEntity> consumer) {
+		((AccessorWorld) player.getWorld()).invokeGetEntityLookup()
+										   .forEach(TypeFilter.instanceOf(IronGolemEntity.class),
+													entity -> {
+														if (entity.getCommandTags().contains("boss")) {
+															return consumer.accept(entity);
+														}
+														return LazyIterationConsumer.NextIteration.CONTINUE;
+													});
+	}
+
+	private boolean isNLFAlive() {
+		var consumer = new LazyIterationConsumer<IronGolemEntity>() {
+			private boolean found;
+
+			@Override
+			public NextIteration accept(IronGolemEntity entity) {
+				found = true;
+				return NextIteration.ABORT;
+			}
+		};
+		forEachNLF(consumer);
+		return consumer.found;
+	}
+
 	private void onJacksonFinalKill() {
 		for (int i = 0; i < 20; i++) {
 			LightningEntity entity = EntityType.LIGHTNING_BOLT.create(asMc().getWorld(), SpawnReason.EVENT);
@@ -271,15 +321,34 @@ public final class GamePlayer {
 		}
 
 		// game over
-		game().state().gameOver(server(), Winner.UN);
+		game().state().gameOver(server(), GameTeam.UN);
 	}
 
 	public void tpSpawn() {
-		var spawnPos = server().getOverworld().getSpawnPos();
-		asMc().teleport(server().getOverworld(),
-						spawnPos.getX(),
-						spawnPos.getY(),
-						spawnPos.getZ(),
+		double x, y, z;
+		var world = player.getServerWorld();
+		if (game().state().isRunning() && roleState().role().team != null) {
+			var playSpawnPoint = game().state().inner.playSpawnPoint();
+			if (playSpawnPoint != null) {
+				x = playSpawnPoint.getX();
+				y = playSpawnPoint.getY();
+				z = playSpawnPoint.getZ();
+			} else {
+				var spawnPos = world.getSpawnPos();
+				x = spawnPos.getX();
+				y = spawnPos.getY();
+				z = spawnPos.getZ();
+			}
+		} else {
+			var spawnPos = world.getSpawnPos();
+			x = spawnPos.getX();
+			y = spawnPos.getY();
+			z = spawnPos.getZ();
+		}
+		asMc().teleport(world,
+						x,
+						y,
+						z,
 						Set.of(),
 						0f,
 						0f,
@@ -294,9 +363,7 @@ public final class GamePlayer {
 		asMc().getHungerManager().setSaturationLevel(5f);
 		((AccessorHungerManager) asMc().getHungerManager()).setExhaustion(0f);
 		tickLogic();
-		if (game().state().isRunning()) {
-			tpSpawn();
-		}
+		tpSpawn();
 		asMc().setHealth(asMc().getMaxHealth());
 	}
 

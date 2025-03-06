@@ -20,6 +20,10 @@ public interface ContainerCodecHelper<T> {
 	@FunctionalInterface
 	interface FieldGetter<T, R> {
 		R get(T container) throws CodecException;
+
+		default <S> FieldGetter<T, S> then(Codec<R, S> codec) {
+			return t -> codec.toR(get(t));
+		}
 	}
 
 	@FunctionalInterface
@@ -37,6 +41,10 @@ public interface ContainerCodecHelper<T> {
 			};
 		}
 
+		default <S> FieldSetter<T, S> then(Codec<R, S> codec) {
+			return (t, r) -> set(t, codec.fromR(r));
+		}
+
 		@FunctionalInterface
 		public interface OrElse<T, R> {
 			void set(CodecException e, T container, R value) throws CodecException;
@@ -46,7 +54,7 @@ public interface ContainerCodecHelper<T> {
 	record ContainerField<T, R>(FieldGetter<T, R> getter,
 								FieldSetter<T, R> setter,
 								String key,
-								boolean skipNulls) {
+								boolean shouldSkipNulls) {
 		public ContainerField(FieldGetter<T, R> getter,
 							  FieldSetter<T, R> setter,
 							  String key) {
@@ -54,12 +62,14 @@ public interface ContainerCodecHelper<T> {
 		}
 
 		public ContainerField<T, R> orElse(FieldSetter.OrElse<T, R> f) {
-			return new ContainerField<>(getter, setter.orElse(f), key);
+			return new ContainerField<>(getter, setter.orElse(f), key, shouldSkipNulls);
 		}
 
 		public <S> ContainerField<T, S> then(Codec<R, S> codec) {
 			if (codec == Codec.IDENTITY) return (ContainerField<T, S>) this;
-			return containerField(getter, setter, codec, key);
+			var getter = this.getter;
+			var setter = this.setter;
+			return new ContainerField<>(getter.then(codec), setter.then(codec), key, shouldSkipNulls);
 		}
 
 		public <C, S> UnboundCompoundField<T, R, C, S> then(Function<C, Codec<R, S>> codecBinder) {
@@ -68,6 +78,11 @@ public interface ContainerCodecHelper<T> {
 
 		public <C, S> UnboundCompoundField<T, R, C, R> asUnbound() {
 			return new UnboundCompoundField<>(this, __ -> Codec.identity());
+		}
+
+		public ContainerField<T, R> skipNulls() {
+			if (shouldSkipNulls) return this;
+			return new ContainerField<>(getter, setter, key, true);
 		}
 	}
 
@@ -86,7 +101,7 @@ public interface ContainerCodecHelper<T> {
 														 FieldSetter<T, R> setter,
 														 Codec<R, S> codec,
 														 String key) {
-		return new ContainerField<>(t -> codec.toR(getter.get(t)), (t, r) -> setter.set(t, codec.fromR(r)), key);
+		return new ContainerField<>(getter.then(codec), setter.then(codec), key);
 	}
 
 	static <T, R, S> ContainerField<T, S> containerField(MethodHandles.Lookup l,
@@ -117,11 +132,6 @@ public interface ContainerCodecHelper<T> {
 			this.setter = setter;
 			this.skipNulls = skipNulls;
 			this.key = key;
-		}
-
-		public ContainerFieldBuilder<T, R> skipNulls() {
-			if (skipNulls) return this;
-			return new ContainerFieldBuilder<>(getter, setter, true, key);
 		}
 
 		public ContainerField<T, R> build() {
@@ -192,7 +202,7 @@ public interface ContainerCodecHelper<T> {
 				try {
 					NbtElement value = field.getter.get(container);
 					if (value == null) {
-						if (!field.skipNulls) throw new CodecException("null value returned from field getter");
+						if (!field.shouldSkipNulls) throw new CodecException("null value returned from field getter");
 						return;
 					}
 					nbt.put(field.key(), value);

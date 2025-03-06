@@ -28,7 +28,6 @@ public final class LogDestupify {
 	}
 
 	public boolean isEnabled(Level level) {
-		// switch should be constant-folded.
 		return switch (level) {
 			case ERROR -> logger.isErrorEnabled();
 			case WARN -> logger.isWarnEnabled();
@@ -39,7 +38,6 @@ public final class LogDestupify {
 	}
 
 	private void logAlways(Level level, String message) {
-		// switch should be constant-folded.
 		switch (level) {
 			case ERROR -> logger.error(message);
 			case WARN -> logger.warn(message);
@@ -50,7 +48,6 @@ public final class LogDestupify {
 	}
 
 	private void logAlways(Level level, String message, Throwable e) {
-		// switch should be constant-folded.
 		switch (level) {
 			case ERROR -> logger.error(message, e);
 			case WARN -> logger.warn(message, e);

@@ -13,14 +13,13 @@ import java.util.List;
 public final class Constants {
 	public static final String MOD_ID = "jacksoning";
 
-	public static final Text LABEL_ROLE = Text.translatable("label." + MOD_ID + ".role").append(": ");
+	public static final String TRANSLATION_SIDEBAR_ROLE = MOD_ID + ".sidebar.role";
 	public static final Text MESSAGE_GAME_OVER_JACKSON_WON = Text.translatable("message." + MOD_ID + ".game_over.jackson_won");
 	public static final Text MESSAGE_GAME_OVER_UN_WON = Text.translatable("message." + MOD_ID + ".game_over.un_won");
-	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_TRUE = Text.translatable("message." + MOD_ID + ".inside_jackson_zone.true");
-	public static final Text MESSAGE_INSIDE_JACKSON_ZONE_FALSE = Text.translatable("message." + MOD_ID + ".inside_jackson_zone.false");
+	public static final Text MESSAGE_INSIDE_NLR_TRUE = Text.translatable("message." + MOD_ID + ".inside_nlr.true");
+	public static final Text MESSAGE_INSIDE_NLR_FALSE = Text.translatable("message." + MOD_ID + ".inside_nlr.false");
 
 	public static final Style GROOVE_VALUE_STYLE = Style.EMPTY.withColor(Formatting.GREEN);
-	public static final Style MESSAGE_GROOVE_DROP_NUMBER_STYLE = Style.EMPTY.withColor(Formatting.YELLOW);
 
 	public static final String PERSISTENT_STATE_ID = MOD_ID;
 
@@ -29,6 +28,7 @@ public final class Constants {
 																						   EntityAttributes.ATTACK_DAMAGE,
 																						   EntityAttributes.ARMOR);
 	public static final Identifier MODIFIER_JACKSON_MAX_HEALTH = Identifier.of(MOD_ID, "jackson_max_health");
+	public static final Identifier MODIFIER_JACKSON_SPEED = Identifier.of(MOD_ID, "jackson_speed");
 	public static final Identifier MODIFIER_MISTRESS_MAX_HEALTH = Identifier.of(MOD_ID, "mistress_max_health");
 	public static final Identifier MODIFIER_PSY_MAX_HEALTH = Identifier.of(MOD_ID, "psy_max_health");
 	public static final Identifier MODIFIER_UPGRADE_MAX_HEALTH = Identifier.of(MOD_ID, "upgrade_max_health");

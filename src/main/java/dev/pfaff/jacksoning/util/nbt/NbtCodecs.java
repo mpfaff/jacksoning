@@ -13,6 +13,7 @@ import net.minecraft.nbt.*;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,5 +125,17 @@ public final class NbtCodecs {
 			a[i] = new BlockPos(flat[i * 3], flat[i * 3 + 1], flat[i * 3 + 2]);
 		}
 		return List.of(a);
+	}));
+	public static Codec<Vec3d, NbtElement> NBT_VEC3D = NBT_LIST.then(Codec.by(l -> {
+		var list = MinecraftNbtWrapper.of(new net.minecraft.nbt.NbtList());
+		list.addAs(NBT_DOUBLE, l.x);
+		list.addAs(NBT_DOUBLE, l.y);
+		list.addAs(NBT_DOUBLE, l.z);
+		return list;
+	}, l -> {
+		if (l.size() != 3) {
+			throw new CodecException("Expected a list with 3 elements, found one with " + l.size() + " elements");
+		}
+		return new Vec3d(l.getAs(0, NBT_DOUBLE), l.getAs(1, NBT_DOUBLE), l.getAs(2, NBT_DOUBLE));
 	}));
 }

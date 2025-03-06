@@ -7,12 +7,11 @@ import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
-import java.util.stream.Stream;
+import java.util.function.ObjIntConsumer;
 
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 
@@ -32,9 +31,8 @@ public final class ShopState implements Container {
 		return Math.max(levels.getOrDefault(item.id(), 0), item.initialLevel());
 	}
 
-	public Stream<ObjectIntImmutablePair<ShopItem>> levels() {
-		// intellij is truly the state of the art when it comes to code formatting.
-		return shop.items.stream().map(item -> new ObjectIntImmutablePair<>(item, getLevel(item)));
+	public void forEachLevel(ObjIntConsumer<ShopItem> consumer) {
+		shop.items.forEach(item -> consumer.accept(item, getLevel(item)));
 	}
 
 	public PurchaseResult purchase(GamePlayer player, String id) {

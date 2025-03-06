@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public abstract class ChangeNotifier<T> {
 	private boolean handled = false;
@@ -17,6 +18,13 @@ public abstract class ChangeNotifier<T> {
 		this.input = input;
 	}
 
+	public void updateCow(T input, UnaryOperator<T> clone) {
+		if (inputEquals(this.input, input)) {
+			handled = true;
+			this.input = clone.apply(input);
+		}
+	}
+
 	public boolean get() {
 		if (handled) {
 			return false;
@@ -27,6 +35,11 @@ public abstract class ChangeNotifier<T> {
 
 	public boolean updateAndGet(T input) {
 		update(input);
+		return get();
+	}
+
+	public boolean updateAndGetCow(T input, UnaryOperator<T> clone) {
+		updateCow(input, clone);
 		return get();
 	}
 

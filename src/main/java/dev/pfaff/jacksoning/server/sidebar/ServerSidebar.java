@@ -17,11 +17,9 @@ import org.slf4j.event.Level;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.pfaff.jacksoning.Constants.GROOVE_VALUE_STYLE;
-import static dev.pfaff.jacksoning.Constants.LABEL_ROLE;
-import static dev.pfaff.jacksoning.Constants.MESSAGE_GROOVE_DROP_NUMBER_STYLE;
-import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_FALSE;
-import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_JACKSON_ZONE_TRUE;
+import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_NLR_FALSE;
+import static dev.pfaff.jacksoning.Constants.MESSAGE_INSIDE_NLR_TRUE;
+import static dev.pfaff.jacksoning.Constants.TRANSLATION_SIDEBAR_ROLE;
 import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
 import static dev.pfaff.jacksoning.sidebar.SidebarCommand.setLine;
 import static dev.pfaff.jacksoning.sidebar.SidebarCommand.truncate;
@@ -30,7 +28,7 @@ public final class ServerSidebar {
 	private SidebarImpl impl;
 
 	public final ChangeNotifier<BlockPos> blockPosChangeNotifier = ChangeNotifier.equality();
-	public boolean insideJacksonZoneCached = false;
+	public boolean insideNLRCached = false;
 
 	private int previousLength = 0;
 	private final DiffingComputerList lineDiffer = new DiffingComputerList();
@@ -69,36 +67,13 @@ public final class ServerSidebar {
 			}
 
 			if (gp.data().isSpawned()) {
-				// TODO: only make copy when necessary.
-				var blockPos = new BlockPos(p.getBlockPos());
-				if (blockPosChangeNotifier.updateAndGet(blockPos)) {
-					insideJacksonZoneCached = gp.isInsideJacksonZone();
+				if (blockPosChangeNotifier.updateAndGetCow(p.getBlockPos(), BlockPos::new)) {
+					insideNLRCached = gp.isInsideNLR();
 				}
-				lineDiffer.get(count++, insideJacksonZoneCached, (a, ctx, i) -> {
-					ctx.add(setLine(i,
-							a ? MESSAGE_INSIDE_JACKSON_ZONE_TRUE : MESSAGE_INSIDE_JACKSON_ZONE_FALSE));
+				lineDiffer.get(count++, insideNLRCached, (a, ctx, i) -> {
+					ctx.add(setLine(i, a ? MESSAGE_INSIDE_NLR_TRUE : MESSAGE_INSIDE_NLR_FALSE));
 					return null;
 				}, buf);
-
-				switch (gp.data().role()) {
-					case Jackson, Mistress -> {
-						lineDiffer.get(count++, gs.economy(), (a, ctx, i) -> {
-							ctx.add(setLine(i,
-									Text.literal("Economy: ")
-										.append(Text.literal(String.valueOf(a))
-													.setStyle(GROOVE_VALUE_STYLE))));
-							return null;
-						}, buf);
-
-						lineDiffer.get(count++, gs.timeUntilNextGroove(), (a, ctx, i) -> {
-							ctx.add(setLine(i,
-									Text.literal("Groove drop in ")
-										.append(Text.literal(String.format("%.1f", a / 20f) + "s")
-													.setStyle(MESSAGE_GROOVE_DROP_NUMBER_STYLE))));
-							return null;
-						}, buf);
-					}
-				}
 			} else {
 				lineDiffer.get(count++, gp.data().respawnTime, (a, ctx, i) -> {
 					ctx.add(setLine(i, "Respawning in " + String.format("%.1f", a / 20f) + "s"));
@@ -108,7 +83,7 @@ public final class ServerSidebar {
 		}
 
 		lineDiffer.get(count++, gp.data().role(), (a, ctx, i) -> {
-			ctx.add(setLine(i, LABEL_ROLE.copy().append(Text.translatable(a.translationKey))));
+			ctx.add(setLine(i, Text.translatable(TRANSLATION_SIDEBAR_ROLE, Text.translatable(a.translationKey))));
 			return null;
 		}, buf);
 
@@ -131,7 +106,7 @@ public final class ServerSidebar {
 		}
 
 		if (!buf.isEmpty()) {
-			LOGGER.log(Level.INFO, n -> "Sending " + n + " sidebar updates", buf.size());
+			LOGGER.log(Level.DEBUG, n -> "Sending " + n + " sidebar updates", buf.size());
 
 			impl.sendUpdates(p, buf);
 		}

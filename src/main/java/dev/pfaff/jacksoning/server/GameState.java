@@ -1,10 +1,7 @@
 package dev.pfaff.jacksoning.server;
 
 import dev.pfaff.jacksoning.PlayerRole;
-import dev.pfaff.jacksoning.Winner;
 import dev.pfaff.jacksoning.player.GamePlayer;
-import dev.pfaff.jacksoning.items.Items;
-import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
@@ -13,7 +10,6 @@ import net.minecraft.world.GameMode;
 
 import java.util.List;
 
-import static dev.pfaff.jacksoning.Config.grooveInterval;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_JACKSON_WON;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_UN_WON;
 
@@ -56,22 +52,6 @@ public final class GameState {
 		return Math.max(inner.time(), 0);
 	}
 
-	public int grooveGifts() {
-		return inner.grooveGifts();
-	}
-
-	public void grooveGifts(int grooveGifts) {
-		inner.grooveGifts(grooveGifts);
-	}
-
-	public int economy() {
-		return inner.economy();
-	}
-
-	public void boostEconomy(int addit) {
-		inner.economy(inner.economy() + addit);
-	}
-
 	public boolean devMode() {
 		return inner.devMode();
 	}
@@ -100,10 +80,6 @@ public final class GameState {
 			assert isRunning();
 			return GameLifecycle.Running;
 		}
-	}
-
-	public int timeUntilNextGroove() {
-		return grooveInterval() - (int) (time() % grooveInterval());
 	}
 
 	/*
@@ -199,6 +175,7 @@ public final class GameState {
 				for (var modifier : inst.getModifiers()) inst.removeModifier(modifier.id());
 			});
 			p.changeGameMode(GameMode.SPECTATOR);
+			GamePlayer.cast(p).tpSpawn();
 		});
 	}
 
@@ -219,29 +196,22 @@ public final class GameState {
 	public void tick(MinecraftServer server) {
 		if (isRunning()) {
 			long time = inner.time();
-			// the number of groove gifts that should have been given by now
-			// hopefully no one is able to cause ticks to skip while still increasing Jackson's economy
-			// I'd rather give them extra groove than skip it entirely
-			int targetGrooveGifts = (int) (time / grooveInterval());
-			if (targetGrooveGifts != grooveGifts()) {
-				int giftGroove = targetGrooveGifts - grooveGifts();
-
-				server.getPlayerManager().getPlayerList().forEach(p -> {
-					var role = GamePlayer.cast(p).data().role();
-					if (role == PlayerRole.Jackson || role == PlayerRole.Mistress) {
-						if (GamePlayer.cast(p).data().isSpawned()) {
-							p.giveItemStack(new ItemStack(Items.CURRENCY, economy() * giftGroove));
-						}
-					}
-				});
-
-				grooveGifts(targetGrooveGifts);
+			if (inner.jacksonLastSeen() + inner.jacksonTimeout() <= time) {
+				gameOver(server, GameTeam.Jackson);
 			}
-			inner.time(time + 1);
+			for (var p : server.getPlayerManager().getPlayerList()) {
+				if (GamePlayer.cast(p).roleState().role() == PlayerRole.Jackson) {
+					inner.jacksonLastSeen(time);
+					break;
+				}
+			}
+			if (isRunning()) {
+				inner.time(time + 1);
+			}
 		}
 	}
 
-	public void gameOver(MinecraftServer server, Winner winner) {
+	public void gameOver(MinecraftServer server, GameTeam winner) {
 		server.getPlayerManager().getPlayerList().forEach(p -> {
 			p.sendMessageToClient(switch (winner) {
 				case UN -> MESSAGE_GAME_OVER_UN_WON;

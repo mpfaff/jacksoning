@@ -69,12 +69,12 @@ public final class Packets {
 	static {
 		try {
 			var l = MethodHandles.lookup();
-			MH_newScoreboardDisplayS2CPacket = MethodHandles.privateLookupIn(ScoreboardDisplayS2CPacket.class, MethodHandles.lookup())
+			MH_newScoreboardDisplayS2CPacket = MethodHandles.privateLookupIn(ScoreboardDisplayS2CPacket.class, l)
 															.findConstructor(
 																ScoreboardDisplayS2CPacket.class,
 																MethodType.methodType(void.class, PacketByteBuf.class)
 															);
-			MH_newScoreboardObjectiveUpdateS2CPacket = MethodHandles.privateLookupIn(ScoreboardObjectiveUpdateS2CPacket.class, MethodHandles.lookup())
+			MH_newScoreboardObjectiveUpdateS2CPacket = MethodHandles.privateLookupIn(ScoreboardObjectiveUpdateS2CPacket.class, l)
 																	.findConstructor(
 																		ScoreboardObjectiveUpdateS2CPacket.class,
 																		MethodType.methodType(void.class, RegistryByteBuf.class)

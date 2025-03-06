@@ -19,7 +19,7 @@ public final class DiffingComputerList {
 	{%- set untracked = total - tracked %}
 
 	public <{{ char_range(from='A', n=total) | delimit(sep=", ", post=", ") }}R> R get(int i, {% for c in char_range(from='A', n=tracked) %}{{ c }} {{ c | lower }}, {% endfor %}Computer.By{{ total+1 }}<{{ char_range(from='A', n=total) | delimit(sep=", ", post=", ") }}Integer, R> func{% for c in char_range(from=(char_add(c='A', i=tracked)), n=untracked) %}, {{ c }} {{ c | lower }}{% endfor %}) {
-		return getEntry(i).get(func {%- for i in range(until=tracked) %}, {{ char_add(c='a', i=i) }}{% endfor %} {%- for i in range(until=untracked) %}, {{ char_add(c='a', i=tracked+i) }}{% endfor %}, i);
+		return getEntry(i).get({% for i in range(until=tracked) %}{{ char_add(c='a', i=i) }}, {% endfor -%} func {%- for i in range(until=untracked) %}, {{ char_add(c='a', i=tracked+i) }}{% endfor %}, i);
 	}
 	{%- endfor %}
 	{%- endfor %}

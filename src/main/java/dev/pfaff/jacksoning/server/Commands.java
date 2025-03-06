@@ -65,9 +65,7 @@ public final class Commands {
 	private static void sendShop(CommandContext<ServerCommandSource> context, ShopState shop) {
 		var src = context.getSource();
 		src.sendMessage(Text.literal("Shop:"));
-		shop.levels().forEach(entry -> {
-			var item = entry.left();
-			var lvl = entry.rightInt();
+		shop.forEachLevel((item, lvl) -> {
 			var msg = item.id() + "[lvl=" + lvl + "] ";
 			if (item.isMaxLevel(lvl)) {
 				msg += "Sold out";
@@ -118,7 +116,7 @@ public final class Commands {
 						return 0;
 					}))
 					.then(argument("value", configProps.argumentType()).executes(catchingIllegalState(context -> {
-						Object value = context.getArgument("value", configProps.clazz());
+						Object value = configProps.get(context);
 						var g = IGame.cast(context.getSource().getServer());
 						try {
 							((ContainerCodecHelper.FieldSetter<GameStateInner, Object>) field.containerField().setter()).set(g.state().inner, value);
@@ -146,11 +144,7 @@ public final class Commands {
 			state.reset(context.getSource().getServer());
 			state.start(context.getSource().getServer());
 			return 0;
-		}))).then(literal("boostEconomy").then(argument("addit", IntegerArgumentType.integer(0)).executes(catchingIllegalState(context -> {
-			int addit = IntegerArgumentType.getInteger(context, "addit");
-			IGame.cast(context.getSource().getServer()).state().boostEconomy(addit);
-			return 0;
-		})))).then(configCommand));
+		}))).then(configCommand));
 		dispatcher.register(literal("shop").requires(ServerCommandSource::isExecutedByPlayer).executes(catchingIllegalState(context -> {
 			var shop = getShop(context);
 			var p = Objects.requireNonNull(context.getSource().getPlayer());
