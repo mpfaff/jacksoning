@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static dev.pfaff.jacksoning.server.GameState.TIME_NOT_STARTED;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_BOOL;
@@ -44,6 +45,7 @@ public final class GameStateInner implements Container {
 			.mapContainerField(ContainerCodecHelper.ContainerField::skipNulls)
 			.configurable(Vec3ArgumentType.vec3(), PosArgument.class, GameStateInner::adaptPosArgumentArgument),
 
+		new StateField<>(LOOKUP, "seed", NBT_LONG, 0L),
 		new StateField<>(LOOKUP, "time", NBT_LONG, INIT_TIME),
 		new StateField<>(LOOKUP, "jacksonLastSeen", NBT_LONG, INIT_JACKSON_LAST_SEEN)
 		//containerField(LOOKUP, "zoneBeacons", NBT_FLAT_BLOCK_POS_LIST.or(INIT_ZONE_BEACONS), "zone_beacons"),
@@ -64,6 +66,7 @@ public final class GameStateInner implements Container {
 	@Nullable
 	private Vec3d playSpawnPoint;
 
+	private long seed;
 	private long time;
 	private long jacksonLastSeen;
 	//private List<BlockPos> zoneBeacons = List.of();
@@ -88,6 +91,7 @@ public final class GameStateInner implements Container {
 	}
 
 	public void init() {
+		seed = ThreadLocalRandom.current().nextLong();
 		time(INIT_TIME);
 		jacksonLastSeen(INIT_JACKSON_LAST_SEEN);
 	}
@@ -186,6 +190,10 @@ public final class GameStateInner implements Container {
 			persistentState.markDirty();
 			this.playSpawnPoint = pos;
 		}
+	}
+
+	public long seed() {
+		return seed;
 	}
 
 	public long time() {

@@ -4,26 +4,25 @@ import dev.pfaff.jacksoning.util.codec.Codecs;
 import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 
-import static dev.pfaff.jacksoning.Constants.MOD_ID;
+import java.util.List;
 
+/**
+ * A team with a stake in the game. Separate from {@link McTeam} to provide some type-safety, for example when calling
+ * {@link GameState#gameOver} (you wouldn't want the {@linkplain McTeam#Referee referees} to win, right?)
+ */
 public enum GameTeam {
-	Jackson("jackson"),
-	UN("un");
+	MJ(McTeam.MJ),
+	UN(McTeam.UN);
 
+	public static final List<GameTeam> VALUES = List.of(values());
 	public static final dev.pfaff.jacksoning.util.codec.Codec<GameTeam, String> STRING_CODEC =
-		Codecs.enumAsString(GameTeam.class, GameTeam::id);
+		Codecs.enumAsString(GameTeam.class, team -> team.mcTeam.id);
 	public static final dev.pfaff.jacksoning.util.codec.Codec<GameTeam, NbtElement> NBT_CODEC =
 		NbtCodecs.NBT_STRING.then(STRING_CODEC);
 
-	public final String id;
-	public final String translationKey;
+	public final McTeam mcTeam;
 
-	private GameTeam(String id) {
-		this.id = id;
-		this.translationKey = "enum." + MOD_ID + ".team." + id;
-	}
-
-	public final String id() {
-		return id;
+	private GameTeam(McTeam mcTeam) {
+		this.mcTeam = mcTeam;
 	}
 }

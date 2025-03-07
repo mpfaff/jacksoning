@@ -1,6 +1,6 @@
 package dev.pfaff.jacksoning.server;
 
-import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.player.PlayerRole;
 import dev.pfaff.jacksoning.server.shop.ShopItems;
 import dev.pfaff.jacksoning.server.shop.ShopState;
 import dev.pfaff.jacksoning.util.codec.Codec;

@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 public final class Codecs {
 	public static <T extends Enum<T>> Codec<T, String> enumAsString(Class<T> clazz, Function<T, String> id) {
 		var byName = enumByNameMap(clazz, id);
-		var names = List.copyOf(byName.values()).toString();
+		var errorMsg = "Expected one of " + List.copyOf(byName.values()) + ", found ";
 		return Codec.by(Coder.adapt(id), r -> {
 			var t = byName.get(r);
-			if (t == null) throw new CodecException("Expected one of " + names + ", found " + r);
+			if (t == null) throw new CodecException(errorMsg + r);
 			return t;
 		});
 	}

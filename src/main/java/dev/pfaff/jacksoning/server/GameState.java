@@ -1,8 +1,9 @@
 package dev.pfaff.jacksoning.server;
 
-import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.player.PlayerRole;
 import dev.pfaff.jacksoning.player.GamePlayer;
 import net.minecraft.registry.Registries;
+import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -153,16 +154,18 @@ public final class GameState {
 				default -> sb.removeTeam(team);
 			}
 		});
-		for (var role : PlayerRole.values()) {
-			var team = sb.addTeam(role.mcTeam);
-			team.setDisplayName(Text.translatable(role.translationKey));
-			team.setColor(switch (role) {
-				case None -> Formatting.RESET;
-				case UNLeader -> Formatting.BLUE;
-				case Jackson -> Formatting.RED;
-				case Mistress -> Formatting.BLACK;
-				case Referee -> Formatting.GRAY;
+		for (var team : McTeam.VALUES) {
+			var mcTeam = sb.addTeam(team.mcTeam);
+			mcTeam.setDisplayName(Text.translatable(team.translationKey));
+			mcTeam.setColor(switch (team) {
+				case UN -> Formatting.BLUE;
+				case MJ -> Formatting.BLACK;
+				case Referee -> Formatting.RED;
+				case Spectator -> Formatting.GRAY;
 			});
+			mcTeam.setPrefix(Text.translatable(team.prefix));
+			// this should be the default, but apparently not. Goofy.
+			mcTeam.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.NEVER);
 		}
 	}
 
@@ -197,7 +200,7 @@ public final class GameState {
 		if (isRunning()) {
 			long time = inner.time();
 			if (inner.jacksonLastSeen() + inner.jacksonTimeout() <= time) {
-				gameOver(server, GameTeam.Jackson);
+				gameOver(server, GameTeam.UN);
 			}
 			for (var p : server.getPlayerManager().getPlayerList()) {
 				if (GamePlayer.cast(p).roleState().role() == PlayerRole.Jackson) {
@@ -215,7 +218,7 @@ public final class GameState {
 		server.getPlayerManager().getPlayerList().forEach(p -> {
 			p.sendMessageToClient(switch (winner) {
 				case UN -> MESSAGE_GAME_OVER_UN_WON;
-				case Jackson -> MESSAGE_GAME_OVER_JACKSON_WON;
+				case MJ -> MESSAGE_GAME_OVER_JACKSON_WON;
 			}, true);
 		});
 		this.stop(server);

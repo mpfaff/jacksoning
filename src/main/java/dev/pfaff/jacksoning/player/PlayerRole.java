@@ -1,17 +1,17 @@
-package dev.pfaff.jacksoning;
+package dev.pfaff.jacksoning.player;
 
-import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.server.GameTeam;
+import dev.pfaff.jacksoning.server.McTeam;
 import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.util.codec.Codecs;
 import dev.pfaff.jacksoning.util.nbt.NbtCodecs;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.Map;
 
 import static dev.pfaff.jacksoning.Constants.MOD_ID;
@@ -19,38 +19,36 @@ import static dev.pfaff.jacksoning.util.codec.Codecs.enumByNameMap;
 import static java.lang.invoke.MethodType.methodType;
 
 public enum PlayerRole {
-	None("none", GameMode.SPECTATOR, null),
-	UNLeader("un_leader", GameMode.SURVIVAL, GameTeam.UN),
-	Jackson("jackson", GameMode.SURVIVAL, GameTeam.Jackson),
-	Mistress("mistress", GameMode.SURVIVAL, GameTeam.Jackson),
-	Referee("referee", GameMode.SPECTATOR, null);
+	None("none", McTeam.Spectator),
+	UNLeader("un_leader", GameTeam.UN),
+	Jackson("jackson", GameTeam.MJ),
+	Mistress("mistress", GameTeam.MJ),
+	Referee("referee", McTeam.Referee);
 
 	public static final PlayerRole DEFAULT = None;
+
+	public static final List<PlayerRole> VALUES = List.of(values());
+	public static final Map<String, PlayerRole> BY_NAME = enumByNameMap(PlayerRole.class, PlayerRole::id);
 
 	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, String> STRING_CODEC =
 		Codecs.enumAsString(PlayerRole.class, PlayerRole::id);
 	public static final dev.pfaff.jacksoning.util.codec.Codec<PlayerRole, NbtElement> NBT_CODEC =
 		NbtCodecs.NBT_STRING.then(STRING_CODEC);
 
-	public static final Map<String, PlayerRole> BY_NAME = enumByNameMap(PlayerRole.class, PlayerRole::id);
-
 	public final String id;
 	public final String translationKey;
-	public final String decoratedNameTranslationKey;
-	public final GameMode gameMode;
 	@Nullable
 	public final GameTeam team;
-	public final String mcTeam;
+	public final McTeam mcTeam;
 	private final MethodHandle stateConstructor;
 
-	private PlayerRole(String id, GameMode gameMode, @Nullable GameTeam team) {
+	private PlayerRole(String id, @Nullable GameTeam team, McTeam mcTeam) {
+		if (team != null) assert team.mcTeam == mcTeam;
+
 		this.id = id;
-		this.translationKey = "enum." + MOD_ID + ".role." + id;
-		this.decoratedNameTranslationKey = MOD_ID + ".role.decorated_name." + id;
-		this.gameMode = gameMode;
+		this.translationKey = MOD_ID + ".role." + id;
 		this.team = team;
-		// temporarily override UN role for compatibility with the map
-		this.mcTeam = id.equals("un_leader") ? "UN" : id;
+		this.mcTeam = mcTeam;
 		var l = MethodHandles.lookup();
 		try {
 			this.stateConstructor = l.findConstructor(l.findClass(RoleState.class.getCanonicalName() + "$" + name()),
@@ -58,6 +56,14 @@ public enum PlayerRole {
 		} catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private PlayerRole(String id, GameTeam team) {
+		this(id, team, team.mcTeam);
+	}
+
+	private PlayerRole(String id, McTeam mcTeam) {
+		this(id, null, mcTeam);
 	}
 
 	public final RoleState newState() {

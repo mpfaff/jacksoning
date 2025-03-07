@@ -1,6 +1,5 @@
 package dev.pfaff.jacksoning.player;
 
-import dev.pfaff.jacksoning.PlayerRole;
 import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.util.codec.CodecException;
 import dev.pfaff.jacksoning.util.nbt.Container;

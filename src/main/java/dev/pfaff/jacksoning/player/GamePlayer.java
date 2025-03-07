@@ -1,21 +1,26 @@
 package dev.pfaff.jacksoning.player;
 
 import dev.pfaff.jacksoning.Constants;
-import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.data.Nicknames;
 import dev.pfaff.jacksoning.mixin.AccessorEntity;
 import dev.pfaff.jacksoning.mixin.AccessorFireworkRocketEntity;
 import dev.pfaff.jacksoning.mixin.AccessorHungerManager;
 import dev.pfaff.jacksoning.mixin.AccessorWorld;
 import dev.pfaff.jacksoning.server.GameTeam;
 import dev.pfaff.jacksoning.server.IGame;
+import dev.pfaff.jacksoning.server.McTeam;
 import dev.pfaff.jacksoning.server.RoleState;
 import dev.pfaff.jacksoning.server.sidebar.ServerSidebar;
+import eu.pb4.polymer.virtualentity.api.ElementHolder;
+import eu.pb4.polymer.virtualentity.api.attachment.EntityAttachment;
+import eu.pb4.polymer.virtualentity.api.elements.TextDisplayElement;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.passive.IronGolemEntity;
@@ -23,10 +28,13 @@ import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.function.LazyIterationConsumer;
@@ -53,9 +61,18 @@ public final class GamePlayer {
 	private final HashSet<String> keepModifiers = new HashSet<>();
 
 	private final ServerPlayerEntity player;
+	private final TextDisplayElement nametag;
+
+	private String nickname = "";
 
 	public GamePlayer(ServerPlayerEntity player) {
 		this.player = player;
+		this.nametag = new TextDisplayElement();
+		this.nametag.setBillboardMode(DisplayEntity.BillboardMode.CENTER);
+		this.nametag.setInstantPositionUpdates(true);
+		var holder = new ElementHolder();
+		holder.addElement(this.nametag);
+		EntityAttachment.ofTicking(holder, player);
 	}
 
 	public static GamePlayer cast(ServerPlayerEntity player) {
@@ -74,13 +91,10 @@ public final class GamePlayer {
 		return data().roleState;
 	}
 
-	public void roleState(RoleState state) {
-		data().roleState = state;
-	}
-
 	public void setRole(PlayerRole role) {
 		LOGGER.log(Level.INFO, () -> "Setting role of " + this + " to " + role);
-		roleState(role.newState());
+		data.roleState = role.newState();
+		applyGameMode(true);
 	}
 
 	public void setInitRole(PlayerRole role) {
@@ -99,6 +113,10 @@ public final class GamePlayer {
 
 	public IGame game() {
 		return (IGame) server();
+	}
+
+	public String nickname() {
+		return nickname;
 	}
 
 	public boolean isReferee() {
@@ -165,13 +183,23 @@ public final class GamePlayer {
 			tpSpawn();
 		}
 
-		if (roleState().role() != PlayerRole.Referee) {
-			applyGameMode(data().isSpawned() ? data().role().gameMode : GameMode.SPECTATOR);
+		applyGameMode(false);
+
+		this.nametag.setOverridePos(player.getPos().add(0, 2, 0));
+
+		var nickname = Nicknames.INSTANCE.getNickname(player);
+		//noinspection StringEquality
+		if (this.nickname != nickname) {
+			this.nickname = nickname;
+			this.nametag.setText(Team.decorateName(player.getScoreboardTeam(), nickname != null ? Text.of(nickname) : player.getName()));
+			server().getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.UPDATE_DISPLAY_NAME, player));
 		}
 
 		var sb = player.server.getScoreboard();
-		var team = sb.getTeam(roleState().role().mcTeam);
-		sb.addScoreHolderToTeam(player.getNameForScoreboard(), team);
+		if (roleState().role().mcTeam instanceof McTeam team) {
+			var mcTeam = sb.getTeam(team.mcTeam);
+			sb.addScoreHolderToTeam(player.getNameForScoreboard(), mcTeam);
+		}
 
 		if (game().state().isRunning()) {
 			if (data().isSpawned()) {
@@ -242,10 +270,13 @@ public final class GamePlayer {
 		}
 	}
 
-	public void applyGameMode(GameMode gameMode) {
-		if (gameMode != asMc().interactionManager.getGameMode()) {
-			asMc().changeGameMode(gameMode);
-		}
+	/**
+	 * @param force whether to force {@link PlayerRole#Referee} back to {@link GameMode#SPECTATOR}.
+	 */
+	public void applyGameMode(boolean force) {
+		if (!force && roleState().role() == PlayerRole.Referee) return;
+		var gameMode = data().isSpawned() && data().role().team != null ? GameMode.SURVIVAL : GameMode.SPECTATOR;
+		asMc().changeGameMode(gameMode);
 	}
 
 	public void onFatalDamage() {
@@ -273,7 +304,7 @@ public final class GamePlayer {
 							entity.refreshPositionAfterTeleport(asMc().getPos());
 							ProjectileEntity.spawn(entity, asMc().getServerWorld(), itemStack);
 						}
-						g.state().gameOver(server(), GameTeam.Jackson);
+						g.state().gameOver(server(), GameTeam.MJ);
 					} else {
 						setRole(PlayerRole.Mistress);
 						asMc().getInventory().dropAll();

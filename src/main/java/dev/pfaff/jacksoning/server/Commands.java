@@ -2,12 +2,11 @@ package dev.pfaff.jacksoning.server;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import dev.pfaff.jacksoning.PlayerRole;
+import dev.pfaff.jacksoning.player.PlayerRole;
 import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.server.shop.PurchaseResult;
 import dev.pfaff.jacksoning.server.shop.ShopScreenHandler;
@@ -190,7 +189,7 @@ public final class Commands {
 								"role",
 								StringArgumentType.word()
 							).suggests((context, builder1) -> {
-								for (var role : PlayerRole.values()) {
+								for (var role : PlayerRole.VALUES) {
 									builder1.suggest(role.id);
 								}
 								return builder1.buildFuture();

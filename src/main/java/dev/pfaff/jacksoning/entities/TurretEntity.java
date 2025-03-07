@@ -132,7 +132,7 @@ public final class TurretEntity extends MobEntity implements PolymerEntity, IGam
 
 	@Override
 	protected Text getDefaultName() {
-		return Text.translatable("entity." + MOD_ID + ".turret", Text.translatable(team.translationKey));
+		return Text.translatable("entity." + MOD_ID + ".turret", Text.translatable(team.mcTeam.translationKey));
 	}
 
 	@Override
