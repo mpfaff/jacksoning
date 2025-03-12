@@ -201,6 +201,12 @@ public final class GamePlayer {
 			sb.addScoreHolderToTeam(player.getNameForScoreboard(), mcTeam);
 		}
 
+		// temporarily added for compatibility
+		switch (roleState().role()) {
+			case Jackson -> player.addCommandTag("Michael");
+			default -> player.removeCommandTag("Michael");
+		}
+
 		if (game().state().isRunning()) {
 			if (data().isSpawned()) {
 				keepModifiers.clear();
