@@ -29,7 +29,7 @@ import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_VEC3D;
 
 public final class GameStateInner implements Container {
 	private static final long INIT_TIME = TIME_NOT_STARTED;
-	private static final long INIT_JACKSON_LAST_SEEN = 0L;
+	private static final long INIT_JACKSON_LAST_SEEN = -1L;
 	//private static final List<BlockPos> INIT_ZONE_BEACONS = List.of();
 
 	private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();

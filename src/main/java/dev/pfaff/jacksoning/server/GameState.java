@@ -199,7 +199,7 @@ public final class GameState {
 	public void tick(MinecraftServer server) {
 		if (isRunning()) {
 			long time = inner.time();
-			if (inner.jacksonLastSeen() + inner.jacksonTimeout() <= time) {
+			if (inner.jacksonLastSeen() != -1L && inner.jacksonLastSeen() + inner.jacksonTimeout() <= time) {
 				gameOver(server, GameTeam.UN);
 			}
 			for (var p : server.getPlayerManager().getPlayerList()) {

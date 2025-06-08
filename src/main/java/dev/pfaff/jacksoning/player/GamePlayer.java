@@ -23,6 +23,7 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.mob.ZombieEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -291,6 +292,17 @@ public final class GamePlayer {
 		if (g.state().isRunning()) {
 			switch (data().role()) {
 				case Jackson -> {
+					//for (var entity : player.getServerWorld()
+					//						.getEntitiesByType(TypeFilter.instanceOf(ZombieEntity.class), entity -> {
+					//							var customName = entity.getCustomName();
+					//							if (customName == null) return false;
+					//							var literal = customName.getLiteralString();
+					//							if (literal == null) return false;
+					//							return literal.equals("The EVIL of the Thriller");
+					//						})) {
+					//	entity.kill(player.getServerWorld());
+					//}
+
 					if (!isNLFAlive()) {
 						onJacksonFinalKill();
 					}
