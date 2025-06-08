@@ -208,6 +208,23 @@ public final class GamePlayer {
 			default -> player.removeCommandTag("Michael");
 		}
 
+		int unLeaderCount = 0;
+		int mistressCount = 0;
+		for (var p : game().players()) {
+			switch (cast(p).roleState().role()) {
+				case UNLeader -> unLeaderCount++;
+				case Mistress -> mistressCount++;
+				default -> {}
+			}
+		}
+
+		boolean isPsy = roleState().role() == PlayerRole.UNLeader && unLeaderCount == 1;
+		if (isPsy) {
+			player.addCommandTag("PSY");
+		} else {
+			player.removeCommandTag("PSY");
+		}
+
 		if (game().state().isRunning()) {
 			if (data().isSpawned()) {
 				keepModifiers.clear();
@@ -223,16 +240,7 @@ public final class GamePlayer {
 									  EntityAttributeModifier.Operation.ADD_VALUE);
 					}
 					case UNLeader -> {
-						int unLeaderCount = 0;
-						int mistressCount = 0;
-						for (var p : game().players()) {
-							switch (cast(p).roleState().role()) {
-								case UNLeader -> unLeaderCount++;
-								case Mistress -> mistressCount++;
-								default -> {}
-							}
-						}
-						if (unLeaderCount == 1) {
+						if (isPsy) {
 							applyModifier(EntityAttributes.MAX_HEALTH,
 										  MODIFIER_PSY_MAX_HEALTH,
 										  20.0 + 8.0 * mistressCount,
