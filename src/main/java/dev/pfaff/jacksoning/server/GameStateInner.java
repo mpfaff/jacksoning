@@ -52,6 +52,9 @@ public final class GameStateInner implements Container {
 		new StateField<>(LOOKUP, "compatDeactivationBlock", NBT_BLOCK_POS.skipNulls(), null)
 			.mapContainerField(ContainerCodecHelper.ContainerField::skipNulls)
 			.configurable(BlockPosArgumentType.blockPos(), PosArgument.class, (source, pos) -> pos.toAbsoluteBlockPos(source)),
+		new StateField<>(LOOKUP, "compatPsyBlock", NBT_BLOCK_POS.skipNulls(), null)
+			.mapContainerField(ContainerCodecHelper.ContainerField::skipNulls)
+			.configurable(BlockPosArgumentType.blockPos(), PosArgument.class, (source, pos) -> pos.toAbsoluteBlockPos(source)),
 
 		new StateField<>(LOOKUP, "seed", NBT_LONG, 0L),
 		new StateField<>(LOOKUP, "time", NBT_LONG, INIT_TIME),
@@ -77,6 +80,8 @@ public final class GameStateInner implements Container {
 	private BlockPos compatActivationBlock;
 	@Nullable
 	private BlockPos compatDeactivationBlock;
+	@Nullable
+	private BlockPos compatPsyBlock;
 
 	private long seed;
 	private long time;
@@ -208,6 +213,11 @@ public final class GameStateInner implements Container {
 	@Nullable
 	public BlockPos compatDeactivationBlock() {
 		return compatDeactivationBlock;
+	}
+
+	@Nullable
+	public BlockPos compatPsyBlock() {
+		return compatPsyBlock;
 	}
 
 	public long seed() {

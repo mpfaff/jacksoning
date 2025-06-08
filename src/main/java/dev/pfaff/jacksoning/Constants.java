@@ -31,6 +31,9 @@ public final class Constants {
 	public static final Identifier MODIFIER_JACKSON_SPEED = Identifier.of(MOD_ID, "jackson_speed");
 	public static final Identifier MODIFIER_MISTRESS_MAX_HEALTH = Identifier.of(MOD_ID, "mistress_max_health");
 	public static final Identifier MODIFIER_PSY_MAX_HEALTH = Identifier.of(MOD_ID, "psy_max_health");
+	public static final Identifier MODIFIER_PSY_MINING_EFFICIENCY = Identifier.of(MOD_ID, "psy_mining_efficiency");
+	public static final Identifier MODIFIER_PSY_MOVEMENT_SPEED = Identifier.of(MOD_ID, "psy_movement_speed");
+	public static final Identifier MODIFIER_PSY_ATTACK_DAMAGE = Identifier.of(MOD_ID, "psy_attack_damage");
 	public static final Identifier MODIFIER_UPGRADE_MAX_HEALTH = Identifier.of(MOD_ID, "upgrade_max_health");
 	public static final Identifier MODIFIER_UPGRADE_SPEED = Identifier.of(MOD_ID, "upgrade_speed");
 	public static final Identifier MODIFIER_UPGRADE_ATTACK_DAMAGE = Identifier.of(MOD_ID, "upgrade_attack_damage");
