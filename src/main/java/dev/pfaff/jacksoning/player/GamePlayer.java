@@ -46,13 +46,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_SPEED;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_MISTRESS_MAX_HEALTH;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_ATTACK_DAMAGE;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MAX_HEALTH;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MINING_EFFICIENCY;
-import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MOVEMENT_SPEED;
+import static dev.pfaff.jacksoning.Constants.*;
 import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
 import static dev.pfaff.jacksoning.player.PlayerData.RESPAWN_TIME_SPAWNED;
 import static net.minecraft.block.Blocks.REDSTONE_BLOCK;
@@ -232,6 +226,14 @@ public final class GamePlayer {
 						applyModifier(EntityAttributes.MOVEMENT_SPEED,
 									  MODIFIER_JACKSON_SPEED,
 									  0.02,
+									  EntityAttributeModifier.Operation.ADD_VALUE);
+						applyModifier(EntityAttributes.SCALE,
+									  MODIFIER_JACKSON_SCALE,
+									  0.2,
+									  EntityAttributeModifier.Operation.ADD_VALUE);
+						applyModifier(EntityAttributes.ENTITY_INTERACTION_RANGE,
+									  MODIFIER_JACKSON_REACH,
+									  0.007,
 									  EntityAttributeModifier.Operation.ADD_VALUE);
 					}
 					case UNLeader -> {
