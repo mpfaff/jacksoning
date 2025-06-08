@@ -205,6 +205,12 @@ public final class GameState {
 			if (inner.compatActivationBlock() != null) {
 				server.getOverworld().setBlockState(inner.compatActivationBlock(), REDSTONE_BLOCK.getDefaultState());
 			}
+			if (inner.compatPsyBlock() != null) {
+				var playerCounts = IGame.cast(server).countPlayers();
+				if (playerCounts.unLeaders() == 1) {
+					server.getOverworld().setBlockState(inner.compatPsyBlock(), REDSTONE_BLOCK.getDefaultState());
+				}
+			}
 
 			long time = inner.time();
 			if (inner.jacksonLastSeen() != -1L && inner.jacksonLastSeen() + inner.jacksonTimeout() <= time) {
@@ -225,6 +231,9 @@ public final class GameState {
 			}
 			if (inner.compatDeactivationBlock() != null) {
 				server.getOverworld().setBlockState(inner.compatDeactivationBlock(), REDSTONE_BLOCK.getDefaultState());
+			}
+			if (inner.compatPsyBlock() != null) {
+				server.getOverworld().removeBlock(inner.compatPsyBlock(), false);
 			}
 		}
 	}

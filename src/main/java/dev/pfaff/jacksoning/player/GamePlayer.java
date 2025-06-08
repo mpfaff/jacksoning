@@ -23,7 +23,6 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.mob.ZombieEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -50,9 +49,13 @@ import java.util.Set;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_MAX_HEALTH;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_JACKSON_SPEED;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_MISTRESS_MAX_HEALTH;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_ATTACK_DAMAGE;
 import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MAX_HEALTH;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MINING_EFFICIENCY;
+import static dev.pfaff.jacksoning.Constants.MODIFIER_PSY_MOVEMENT_SPEED;
 import static dev.pfaff.jacksoning.Jacksoning.LOGGER;
 import static dev.pfaff.jacksoning.player.PlayerData.RESPAWN_TIME_SPAWNED;
+import static net.minecraft.block.Blocks.REDSTONE_BLOCK;
 
 public final class GamePlayer {
 	public final PlayerData data = new PlayerData();
@@ -208,17 +211,9 @@ public final class GamePlayer {
 			default -> player.removeCommandTag("Michael");
 		}
 
-		int unLeaderCount = 0;
-		int mistressCount = 0;
-		for (var p : game().players()) {
-			switch (cast(p).roleState().role()) {
-				case UNLeader -> unLeaderCount++;
-				case Mistress -> mistressCount++;
-				default -> {}
-			}
-		}
+		var playerCounts = game().countPlayers();
 
-		boolean isPsy = roleState().role() == PlayerRole.UNLeader && unLeaderCount == 1;
+		boolean isPsy = roleState().role() == PlayerRole.UNLeader && playerCounts.unLeaders() == 1;
 		if (isPsy) {
 			player.addCommandTag("PSY");
 		} else {
@@ -243,7 +238,19 @@ public final class GamePlayer {
 						if (isPsy) {
 							applyModifier(EntityAttributes.MAX_HEALTH,
 										  MODIFIER_PSY_MAX_HEALTH,
-										  20.0 + 8.0 * mistressCount,
+										  20.0 + 8.0 * playerCounts.mistresses(),
+										  EntityAttributeModifier.Operation.ADD_VALUE);
+							applyModifier(EntityAttributes.MINING_EFFICIENCY,
+										  MODIFIER_PSY_MINING_EFFICIENCY,
+										  0.1,
+										  EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+							applyModifier(EntityAttributes.MOVEMENT_SPEED,
+										  MODIFIER_PSY_MOVEMENT_SPEED,
+										  0.044,
+										  EntityAttributeModifier.Operation.ADD_VALUE);
+							applyModifier(EntityAttributes.ATTACK_DAMAGE,
+										  MODIFIER_PSY_ATTACK_DAMAGE,
+										  2.0,
 										  EntityAttributeModifier.Operation.ADD_VALUE);
 						}
 					}
@@ -334,6 +341,25 @@ public final class GamePlayer {
 					} else {
 						setRole(PlayerRole.Mistress);
 						asMc().getInventory().dropAll();
+
+						ServerPlayerEntity lastUnLeader = null;
+						boolean foundUnLeader = false;
+						for (var p : game().players()) {
+							switch (cast(p).roleState().role()) {
+								case UNLeader -> {
+									if (foundUnLeader) {
+										lastUnLeader = null;
+									} else {
+										foundUnLeader = true;
+										lastUnLeader = p;
+									}
+								}
+								default -> {}
+							}
+						}
+						if (lastUnLeader != null) {
+							lastUnLeader.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, 20 * 10, 10, false, false));
+						}
 					}
 				}
 				default -> {
