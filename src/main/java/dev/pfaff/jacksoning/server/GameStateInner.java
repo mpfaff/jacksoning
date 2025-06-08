@@ -8,10 +8,11 @@ import dev.pfaff.jacksoning.util.nbt.Container;
 import dev.pfaff.jacksoning.util.nbt.ContainerCodecHelper;
 import dev.pfaff.jacksoning.util.nbt.NbtCompound;
 import dev.pfaff.jacksoning.util.nbt.NbtElement;
+import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.PosArgument;
 import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.PersistentState;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,7 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static dev.pfaff.jacksoning.server.GameState.TIME_NOT_STARTED;
+import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_BLOCK_POS;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_BOOL;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_INT;
 import static dev.pfaff.jacksoning.util.nbt.NbtCodecs.NBT_LONG;
@@ -43,7 +45,13 @@ public final class GameStateInner implements Container {
 		new StateField<>(LOOKUP, "jacksonTimeout", NBT_INT, 20 * 30).configurable(IntegerArgumentType.integer(0), int.class),
 		new StateField<>(LOOKUP, "playSpawnPoint", NBT_VEC3D.skipNulls(), null)
 			.mapContainerField(ContainerCodecHelper.ContainerField::skipNulls)
-			.configurable(Vec3ArgumentType.vec3(), PosArgument.class, GameStateInner::adaptPosArgumentArgument),
+			.configurable(Vec3ArgumentType.vec3(), PosArgument.class, (source, pos) -> pos.getPos(source)),
+		new StateField<>(LOOKUP, "compatActivationBlock", NBT_BLOCK_POS.skipNulls(), null)
+			.mapContainerField(ContainerCodecHelper.ContainerField::skipNulls)
+			.configurable(BlockPosArgumentType.blockPos(), PosArgument.class, (source, pos) -> pos.toAbsoluteBlockPos(source)),
+		new StateField<>(LOOKUP, "compatDeactivationBlock", NBT_BLOCK_POS.skipNulls(), null)
+			.mapContainerField(ContainerCodecHelper.ContainerField::skipNulls)
+			.configurable(BlockPosArgumentType.blockPos(), PosArgument.class, (source, pos) -> pos.toAbsoluteBlockPos(source)),
 
 		new StateField<>(LOOKUP, "seed", NBT_LONG, 0L),
 		new StateField<>(LOOKUP, "time", NBT_LONG, INIT_TIME),
@@ -65,6 +73,10 @@ public final class GameStateInner implements Container {
 	private int jacksonTimeout;
 	@Nullable
 	private Vec3d playSpawnPoint;
+	@Nullable
+	private BlockPos compatActivationBlock;
+	@Nullable
+	private BlockPos compatDeactivationBlock;
 
 	private long seed;
 	private long time;
@@ -85,10 +97,6 @@ public final class GameStateInner implements Container {
 			return nbt;
 		}
 	};
-
-	private static Vec3d adaptPosArgumentArgument(ServerCommandSource source, PosArgument pos) {
-		return pos.getPos(source);
-	}
 
 	public void init() {
 		seed = ThreadLocalRandom.current().nextLong();
@@ -190,6 +198,16 @@ public final class GameStateInner implements Container {
 			persistentState.markDirty();
 			this.playSpawnPoint = pos;
 		}
+	}
+
+	@Nullable
+	public BlockPos compatActivationBlock() {
+		return compatActivationBlock;
+	}
+
+	@Nullable
+	public BlockPos compatDeactivationBlock() {
+		return compatDeactivationBlock;
 	}
 
 	public long seed() {
