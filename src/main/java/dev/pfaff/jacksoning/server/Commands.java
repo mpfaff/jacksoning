@@ -130,18 +130,17 @@ public final class Commands {
 			);
 		}
 		dispatcher.register(literal(MOD_ID).then(literal("start").executes(catchingIllegalState(context -> {
-			IGame.cast(context.getSource().getServer()).state().start(context.getSource().getServer());
+			var state = IGame.cast(context.getSource().getServer()).state();
+			if (state.isEnded()) {
+				state.reset(context.getSource().getServer());
+			}
+			state.start(context.getSource().getServer());
 			return 0;
 		}))).then(literal("stop").executes(catchingIllegalState(context -> {
 			IGame.cast(context.getSource().getServer()).state().stop(context.getSource().getServer());
 			return 0;
 		}))).then(literal("reset").executes(catchingIllegalState(context -> {
 			IGame.cast(context.getSource().getServer()).state().reset(context.getSource().getServer());
-			return 0;
-		}))).then(literal("restart").executes(catchingIllegalState(context -> {
-			var state = IGame.cast(context.getSource().getServer()).state();
-			state.reset(context.getSource().getServer());
-			state.start(context.getSource().getServer());
 			return 0;
 		}))).then(configCommand));
 		dispatcher.register(literal("shop").requires(ServerCommandSource::isExecutedByPlayer).executes(catchingIllegalState(context -> {
