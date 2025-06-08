@@ -29,6 +29,8 @@ public final class Constants {
 																						   EntityAttributes.ARMOR);
 	public static final Identifier MODIFIER_JACKSON_MAX_HEALTH = Identifier.of(MOD_ID, "jackson_max_health");
 	public static final Identifier MODIFIER_JACKSON_SPEED = Identifier.of(MOD_ID, "jackson_speed");
+	public static final Identifier MODIFIER_JACKSON_SCALE = Identifier.of(MOD_ID, "jackson_scale");
+	public static final Identifier MODIFIER_JACKSON_REACH = Identifier.of(MOD_ID, "jackson_reach");
 	public static final Identifier MODIFIER_MISTRESS_MAX_HEALTH = Identifier.of(MOD_ID, "mistress_max_health");
 	public static final Identifier MODIFIER_PSY_MAX_HEALTH = Identifier.of(MOD_ID, "psy_max_health");
 	public static final Identifier MODIFIER_PSY_MINING_EFFICIENCY = Identifier.of(MOD_ID, "psy_mining_efficiency");
