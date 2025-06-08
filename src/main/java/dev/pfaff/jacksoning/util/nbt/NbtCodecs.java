@@ -138,4 +138,16 @@ public final class NbtCodecs {
 		}
 		return new Vec3d(l.getAs(0, NBT_DOUBLE), l.getAs(1, NBT_DOUBLE), l.getAs(2, NBT_DOUBLE));
 	}));
+	public static Codec<BlockPos, NbtElement> NBT_BLOCK_POS = NBT_INT_ARRAY.then(Codec.by(l -> {
+		return new int[]{
+			l.getX(),
+			l.getY(),
+			l.getZ()
+		};
+	}, a -> {
+		if (a.length != 3) {
+			throw new CodecException("Expected an int array with 3 elements, found one with " + a.length + " elements");
+		}
+		return new BlockPos(a[0], a[1], a[2]);
+	}));
 }

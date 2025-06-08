@@ -13,6 +13,7 @@ import java.util.List;
 
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_JACKSON_WON;
 import static dev.pfaff.jacksoning.Constants.MESSAGE_GAME_OVER_UN_WON;
+import static net.minecraft.block.Blocks.REDSTONE_BLOCK;
 
 public final class GameState {
 	static final long TIME_NOT_STARTED = -1;
@@ -198,6 +199,13 @@ public final class GameState {
 
 	public void tick(MinecraftServer server) {
 		if (isRunning()) {
+			if (inner.compatDeactivationBlock() != null) {
+				server.getOverworld().removeBlock(inner.compatDeactivationBlock(), false);
+			}
+			if (inner.compatActivationBlock() != null) {
+				server.getOverworld().setBlockState(inner.compatActivationBlock(), REDSTONE_BLOCK.getDefaultState());
+			}
+
 			long time = inner.time();
 			if (inner.jacksonLastSeen() != -1L && inner.jacksonLastSeen() + inner.jacksonTimeout() <= time) {
 				gameOver(server, GameTeam.UN);
@@ -210,6 +218,13 @@ public final class GameState {
 			}
 			if (isRunning()) {
 				inner.time(time + 1);
+			}
+		} else {
+			if (inner.compatActivationBlock() != null) {
+				server.getOverworld().removeBlock(inner.compatActivationBlock(), false);
+			}
+			if (inner.compatDeactivationBlock() != null) {
+				server.getOverworld().setBlockState(inner.compatDeactivationBlock(), REDSTONE_BLOCK.getDefaultState());
 			}
 		}
 	}
