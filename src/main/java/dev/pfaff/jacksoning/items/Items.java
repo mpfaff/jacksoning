@@ -1,5 +1,6 @@
 package dev.pfaff.jacksoning.items;
 
+import dev.pfaff.jacksoning.items.abilities.OhMyGodWeReDoomedItem;
 import dev.pfaff.jacksoning.items.abilities.TestAbilityItem;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -22,6 +23,11 @@ public final class Items {
 		.component(MAX_DAMAGE, 4)
 		.component(DAMAGE, 0)
 		.component(REPAIR_TIME, 40));
+
+	public static final Item OH_MY_GOD_WERE_DOOMED = register("oh_my_god_were_doomed", OhMyGodWeReDoomedItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 40));
 
 	private static RegistryKey<Item> keyOfItem(String name) {
 		return RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MOD_ID, name));

@@ -9,13 +9,12 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import xyz.nucleoid.packettweaker.PacketContext;
 
-public final class TestAbilityItem extends AbilityItem {
-	public TestAbilityItem(Settings settings) {
+public final class CBTItem extends AbilityItem {
+	public CBTItem(Settings settings) {
 		super(settings);
 	}
 
@@ -26,9 +25,7 @@ public final class TestAbilityItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		user.addVelocity(0.0, 1.0, 0.0);
-		user.velocityModified = true;
-		world.playSoundFromEntity(null,user, SoundEvent.of(Identifier.of("custom.ohmygodweredoomed")), SoundCategory.MASTER, 1.0F, 1.0F);
+		world.playSoundFromEntity(null,user, SoundEvent.of(Identifier.of("custom.cbtcast")), SoundCategory.MASTER, 1.0F, 1.0F);
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 10, 5 ));
 		return super.useAbility(world, user, stack);
 	}
