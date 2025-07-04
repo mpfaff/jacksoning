@@ -1,6 +1,7 @@
 package dev.pfaff.jacksoning.items;
 
 import dev.pfaff.jacksoning.items.abilities.FeelinFeelinGoodItem;
+import dev.pfaff.jacksoning.items.abilities.MiningFocusItem;
 import dev.pfaff.jacksoning.items.abilities.OhMyGodWeReDoomedItem;
 import dev.pfaff.jacksoning.items.abilities.TestAbilityItem;
 import net.minecraft.item.Item;
@@ -34,6 +35,11 @@ public final class Items {
 			.component(MAX_DAMAGE, 1)
 			.component(DAMAGE, 0)
 			.component(REPAIR_TIME, 1000));
+
+	public static final Item MINING_FOCUS = register("mining_focus", MiningFocusItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 2)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 800));
 
 	private static RegistryKey<Item> keyOfItem(String name) {
 		return RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MOD_ID, name));
