@@ -6,10 +6,10 @@ import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
 import xyz.nucleoid.packettweaker.PacketContext;
+
+import static dev.pfaff.jacksoning.sounds.Sounds.BOSS_OF_THE_GYM_COME_ON_LETS_GO;
 
 public final class BeatItItem extends AbilityItem {
 	public BeatItItem(Settings settings) {
@@ -23,7 +23,7 @@ public final class BeatItItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("custom.bossofgymcomeonletsgo")), SoundCategory.MASTER, 1.0f, 1.0f);
+		world.playSoundFromEntity(null, user, BOSS_OF_THE_GYM_COME_ON_LETS_GO, SoundCategory.MASTER, 1.0f, 1.0f);
         //Waits a certain length of time
 		//setblock -57 -33 27 minecraft:waxed_copper_bulb
 		//IF upgrade "It doesn't matter whos wrong or who's right" is active:/tp @e[x=-50 , y=-33.00, z=37, dx=-13, dy=8, dz=-11, type=!minecraft:player, tag=!Shop] -60 -30 12

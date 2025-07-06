@@ -8,6 +8,7 @@ import dev.pfaff.jacksoning.items.Items;
 import dev.pfaff.jacksoning.packet.UpdateUIPacket;
 import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.server.Commands;
+import dev.pfaff.jacksoning.sounds.Sounds;
 import dev.pfaff.jacksoning.util.LogDestupify;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -24,6 +25,7 @@ public class Jacksoning implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		Sounds.initialize();
 		Blocks.initialize();
 		Items.initialize();
 		Entities.initialize();

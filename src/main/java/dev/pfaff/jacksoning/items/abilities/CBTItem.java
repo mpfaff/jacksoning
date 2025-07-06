@@ -6,10 +6,10 @@ import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
 import xyz.nucleoid.packettweaker.PacketContext;
+
+import static dev.pfaff.jacksoning.sounds.Sounds.CBT_CAST;
 
 public final class CBTItem extends AbilityItem {
 	public CBTItem(Settings settings) {
@@ -23,7 +23,7 @@ public final class CBTItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("custom.cbtcast")), SoundCategory.MASTER, 1.0f, 1.0f);
+		world.playSoundFromEntity(null, user, CBT_CAST, SoundCategory.MASTER, 1.0f, 1.0f);
 		//execute at @e[type= minecraft:bat, name="CBT"] run summon minecraft:armor_stand ~ ~ ~ {Invulnerable:1b,Tags:[CBT,"New"]}
 		//kill @e[name=CBT]
 		//probably don't use the bat named cbt or armor stands when translating.

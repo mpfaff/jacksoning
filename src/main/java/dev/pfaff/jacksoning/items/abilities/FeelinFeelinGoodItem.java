@@ -8,10 +8,10 @@ import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
 import xyz.nucleoid.packettweaker.PacketContext;
+
+import static dev.pfaff.jacksoning.sounds.Sounds.FEELIN_FEELING_GOOD;
 
 public final class FeelinFeelinGoodItem extends AbilityItem {
 	public FeelinFeelinGoodItem(Settings settings) {
@@ -25,7 +25,7 @@ public final class FeelinFeelinGoodItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("custom.feelinfeelingood")), SoundCategory.MASTER, 1.0f, 1.0f);
+		world.playSoundFromEntity(null, user, FEELIN_FEELING_GOOD, SoundCategory.MASTER, 1.0f, 1.0f);
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 40, 5));
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 40, 5));
 		//IDEALLY, THIS WOULD ALSO CREATE PARTICLES AROUND THE USER, SPECIFICALLY "/particle minecraft:ominous_spawning ~ ~1 ~ 1 1 1 0.5 100 force" and "/particle minecraft:end_rod ~ ~1 ~ 1 1 1 0.2 100 force"

@@ -8,9 +8,8 @@ import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
 import xyz.nucleoid.packettweaker.PacketContext;
 
 public final class MiningFocusItem extends AbilityItem {
@@ -25,7 +24,7 @@ public final class MiningFocusItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("entity.blaze.shoot")), SoundCategory.MASTER, 1.0f, 1.0f);
+		world.playSoundFromEntity(null, user, SoundEvents.ENTITY_BLAZE_SHOOT, SoundCategory.MASTER, 1.0f, 1.0f);
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.HASTE, 200, 225));
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 200, 1));
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 100, 0));

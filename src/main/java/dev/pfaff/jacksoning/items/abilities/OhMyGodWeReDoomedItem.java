@@ -8,10 +8,10 @@ import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
 import xyz.nucleoid.packettweaker.PacketContext;
+
+import static dev.pfaff.jacksoning.sounds.Sounds.OH_MY_GOD_WERE_DOOMED;
 
 public final class OhMyGodWeReDoomedItem extends AbilityItem {
 	public OhMyGodWeReDoomedItem(Settings settings) {
@@ -25,7 +25,7 @@ public final class OhMyGodWeReDoomedItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("custom.ohmygodweredoomed")), SoundCategory.MASTER, 1.0f, 1.0f);
+		world.playSoundFromEntity(null, user, OH_MY_GOD_WERE_DOOMED, SoundCategory.MASTER, 1.0f, 1.0f);
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 100, 6));
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.MINING_FATIGUE, 400, 5));
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 100, 5));
