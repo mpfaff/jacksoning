@@ -1,6 +1,6 @@
 # The Jacksoning
 
-This is a port of the beloved [The Jacksoning FOREVER](https://sc2arcade.com/map/1/322009/) map for StarCraft 2.
+An adaption of the beloved [The Jacksoning FOREVER](https://sc2arcade.com/map/1/322009/) map for StarCraft 2.
 
 ## Technical notes
 
