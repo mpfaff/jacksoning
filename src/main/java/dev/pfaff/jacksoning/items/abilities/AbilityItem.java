@@ -3,9 +3,11 @@ package dev.pfaff.jacksoning.items.abilities;
 import eu.pb4.polymer.core.api.item.PolymerItem;
 import eu.pb4.polymer.core.api.other.PolymerComponent;
 import net.minecraft.component.ComponentType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -39,7 +41,10 @@ public abstract class AbilityItem extends Item implements PolymerItem {
 		if (!this.getComponents().contains(REPAIR_TIME)) throw new IllegalArgumentException("Missing required component " + REPAIR_TIME);
 	}
 
-	protected ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
+	/**
+	 * @param target if non-null, the entity that was interacted with
+	 */
+	protected ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
 		int damage = stack.getDamage() + 1;
 		int maxDamage = stack.getMaxDamage();
 		if (damage >= maxDamage) {
@@ -55,8 +60,24 @@ public abstract class AbilityItem extends Item implements PolymerItem {
 	public ActionResult use(World world, PlayerEntity user, Hand hand) {
 		if (!world.isClient) {
 			ItemStack stack = user.getStackInHand(hand);
-			return useAbility((ServerWorld) world, (ServerPlayerEntity) user, stack);
+			return useAbility((ServerWorld) world, (ServerPlayerEntity) user, stack, InteractionTarget.AIR);
 		}
 		return super.use(world, user, hand);
+	}
+
+	@Override
+	public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
+		if (!user.getWorld().isClient) {
+			return useAbility((ServerWorld) user.getWorld(), (ServerPlayerEntity) user, stack, new InteractionTarget.Entity(entity));
+		}
+		return super.useOnEntity(stack, user, entity, hand);
+	}
+
+	@Override
+	public ActionResult useOnBlock(ItemUsageContext context) {
+		if (!context.getWorld().isClient) {
+			return useAbility((ServerWorld) context.getWorld(), (ServerPlayerEntity) context.getPlayer(), context.getStack(), new InteractionTarget.Block(context));
+		}
+		return super.useOnBlock(context);
 	}
 }

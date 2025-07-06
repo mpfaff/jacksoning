@@ -22,7 +22,7 @@ public final class BeatItItem extends AbilityItem {
 	}
 
 	@Override
-	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
+	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
 		world.playSoundFromEntity(null, user, BOSS_OF_THE_GYM_COME_ON_LETS_GO, SoundCategory.MASTER, 1.0f, 1.0f);
         //Waits a certain length of time
 		//setblock -57 -33 27 minecraft:waxed_copper_bulb
@@ -47,6 +47,6 @@ public final class BeatItItem extends AbilityItem {
 		//	/clone 8 -14 45 39 -23 56 -76 -31 26 filtered minecraft:stone_brick_slab
 		//	/clone 8 -14 45 39 -23 56 -76 -31 26 filtered minecraft:stone_brick_stairs
 
-		return super.useAbility(world, user, stack);
+		return super.useAbility(world, user, stack, target);
 	}
 }

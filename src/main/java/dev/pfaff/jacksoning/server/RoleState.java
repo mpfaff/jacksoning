@@ -39,7 +39,15 @@ public abstract sealed class RoleState implements Container {
 		return PlayerRole.DEFAULT.newState();
 	});
 
-	public abstract PlayerRole role();
+	public final PlayerRole role() {
+		return switch (this) {
+			case None ignored -> PlayerRole.None;
+			case Jackson ignored -> PlayerRole.Jackson;
+			case Mistress ignored -> PlayerRole.Mistress;
+			case UNLeader ignored -> PlayerRole.UNLeader;
+			case Referee ignored -> PlayerRole.Referee;
+		};
+	}
 
 	@Nullable
 	public final ShopState shop() {
@@ -65,17 +73,9 @@ public abstract sealed class RoleState implements Container {
 	}
 
 	public static final class None extends RoleState {
-		@Override
-		public PlayerRole role() {
-			return PlayerRole.None;
-		}
 	}
 
 	public static final class UNLeader extends RoleState {
-		@Override
-		public PlayerRole role() {
-			return PlayerRole.UNLeader;
-		}
 	}
 
 	public static final class Jackson extends RoleState {
@@ -90,11 +90,6 @@ public abstract sealed class RoleState implements Container {
 
 		public boolean spawned;
 		public final ShopState shop = new ShopState(ShopItems.JACKSON);
-
-		@Override
-		public PlayerRole role() {
-			return PlayerRole.Jackson;
-		}
 
 		@Override
 		public void writeNbt(NbtCompound nbt) throws CodecException {
@@ -117,11 +112,6 @@ public abstract sealed class RoleState implements Container {
 		public final ShopState shop = new ShopState(ShopItems.MISTRESS);
 
 		@Override
-		public PlayerRole role() {
-			return PlayerRole.Mistress;
-		}
-
-		@Override
 		public void writeNbt(NbtCompound nbt) throws CodecException {
 			super.writeNbt(nbt);
 			CODEC.write(this, nbt);
@@ -135,9 +125,5 @@ public abstract sealed class RoleState implements Container {
 	}
 
 	public static final class Referee extends RoleState {
-		@Override
-		public PlayerRole role() {
-			return PlayerRole.Referee;
-		}
 	}
 }

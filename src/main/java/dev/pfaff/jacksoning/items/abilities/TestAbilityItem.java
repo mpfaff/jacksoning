@@ -24,11 +24,11 @@ public final class TestAbilityItem extends AbilityItem {
 	}
 
 	@Override
-	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
+	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
 		user.addVelocity(0.0, 1.0, 0.0);
 		user.velocityModified = true;
 		world.playSoundFromEntity(null, user, OH_MY_GOD_WERE_DOOMED, SoundCategory.MASTER, 1.0f, 1.0f);
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 10, 5));
-		return super.useAbility(world, user, stack);
+		return super.useAbility(world, user, stack, target);
 	}
 }
