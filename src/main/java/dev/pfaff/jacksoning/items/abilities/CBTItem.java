@@ -1,7 +1,5 @@
 package dev.pfaff.jacksoning.items.abilities;
 
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -25,7 +23,7 @@ public final class CBTItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null,user, SoundEvent.of(Identifier.of("custom.cbtcast")), SoundCategory.MASTER, 1.0F, 1.0F);
+		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("custom.cbtcast")), SoundCategory.MASTER, 1.0f, 1.0f);
 		//execute at @e[type= minecraft:bat, name="CBT"] run summon minecraft:armor_stand ~ ~ ~ {Invulnerable:1b,Tags:[CBT,"New"]}
 		//kill @e[name=CBT]
 		//probably don't use the bat named cbt or armor stands when translating.

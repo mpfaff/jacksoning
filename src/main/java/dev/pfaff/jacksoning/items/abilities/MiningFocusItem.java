@@ -25,10 +25,10 @@ public final class MiningFocusItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null,user, SoundEvent.of(Identifier.of("entity.blaze.shoot")), SoundCategory.MASTER, 1.0F, 1.0F);
-		user.addStatusEffect(new StatusEffectInstance(StatusEffects.HASTE, 200, 225 ));
-		user.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 200, 1 ));
-		user.addStatusEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 100, 0 ));
+		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("entity.blaze.shoot")), SoundCategory.MASTER, 1.0f, 1.0f);
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.HASTE, 200, 225));
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 200, 1));
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 100, 0));
 		return super.useAbility(world, user, stack);
 	}
 }

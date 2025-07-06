@@ -23,7 +23,7 @@ public final class BeatItItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
-		world.playSoundFromEntity(null,user, SoundEvent.of(Identifier.of("custom.bossofgymcomeonletsgo")), SoundCategory.MASTER, 1.0F, 1.0F);
+		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("custom.bossofgymcomeonletsgo")), SoundCategory.MASTER, 1.0f, 1.0f);
         //Waits a certain length of time
 		//setblock -57 -33 27 minecraft:waxed_copper_bulb
 		//IF upgrade "It doesn't matter whos wrong or who's right" is active:/tp @e[x=-50 , y=-33.00, z=37, dx=-13, dy=8, dz=-11, type=!minecraft:player, tag=!Shop] -60 -30 12
@@ -46,7 +46,6 @@ public final class BeatItItem extends AbilityItem {
 		// 	/clone 8 -14 45 39 -23 56 -76 -31 26 filtered minecraft:stone_bricks
 		//	/clone 8 -14 45 39 -23 56 -76 -31 26 filtered minecraft:stone_brick_slab
 		//	/clone 8 -14 45 39 -23 56 -76 -31 26 filtered minecraft:stone_brick_stairs
-
 
 		return super.useAbility(world, user, stack);
 	}

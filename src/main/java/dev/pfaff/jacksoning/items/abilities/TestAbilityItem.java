@@ -28,8 +28,8 @@ public final class TestAbilityItem extends AbilityItem {
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack) {
 		user.addVelocity(0.0, 1.0, 0.0);
 		user.velocityModified = true;
-		world.playSoundFromEntity(null,user, SoundEvent.of(Identifier.of("custom.ohmygodweredoomed")), SoundCategory.MASTER, 1.0F, 1.0F);
-		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 10, 5 ));
+		world.playSoundFromEntity(null, user, SoundEvent.of(Identifier.of("custom.ohmygodweredoomed")), SoundCategory.MASTER, 1.0f, 1.0f);
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 10, 5));
 		return super.useAbility(world, user, stack);
 	}
 }
