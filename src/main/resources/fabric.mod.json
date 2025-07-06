@@ -8,7 +8,7 @@
     "Michael Pfaff <michael@pfaff.dev>"
   ],
   "contact": {},
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-only",
   "icon": "assets/jacksoning/icon.png",
   "environment": "*",
   "entrypoints": {
