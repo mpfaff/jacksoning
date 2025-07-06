@@ -15,15 +15,15 @@ import net.minecraft.client.util.Window;
 import java.util.Arrays;
 
 public final class ClientSidebar {
-	private static final OpenArrayList<StringOrText> lines = OpenArrayList.wrap(StringOrText.EMPTY_ARRAY);
-	private static Alignment[] alignments = Alignment.EMPTY_ARRAY;
-	private static int[] widthBuffer = EmptyArrays.EMPTY_INTS;
+	private static final EdgeInsets PADDING = EdgeInsets.symmetrical(4, 2);
+	private static final EdgeInsets MARGIN = EdgeInsets.symmetrical(4, 2);
 
 	private static final Window mcWindow = MinecraftClient.getInstance().getWindow();
 	private static final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
 
-	private static final EdgeInsets padding = EdgeInsets.symmetrical(4, 2);
-	private static final EdgeInsets margin = EdgeInsets.symmetrical(4, 2);
+	private static final OpenArrayList<StringOrText> lines = OpenArrayList.wrap(StringOrText.EMPTY_ARRAY);
+	private static Alignment[] alignments = Alignment.EMPTY_ARRAY;
+	private static int[] widthBuffer = EmptyArrays.EMPTY_INTS;
 
 	public static void render(DrawContext context, RenderTickCounter tickCounter) {
 		var lines = ClientSidebar.lines;
@@ -43,15 +43,15 @@ public final class ClientSidebar {
 			maxWidth = Math.max(maxWidth, width);
 		}
 		int fontHeight = textRenderer.fontHeight;
-		int endX = mcWindow.getScaledWidth() - margin.right();
-		int startX = endX - maxWidth - padding.horizontal();
+		int endX = mcWindow.getScaledWidth() - MARGIN.right();
+		int startX = endX - maxWidth - PADDING.horizontal();
 		int y = mcWindow.getScaledHeight() / 2 - lines.size() * fontHeight / 2;
 		context.fill(startX,
-					 y - padding.top(),
+					 y - PADDING.top(),
 					 endX,
-					 y + lines.size() * fontHeight + padding.bottom(),
+					 y + lines.size() * fontHeight + PADDING.bottom(),
 					 0x90_505050);
-		int paddedX = startX + padding.left();
+		int paddedX = startX + PADDING.left();
 		for (var i = 0; i < l; i++) {
 			var line = linesArray[i];
 			if (line == null) {
