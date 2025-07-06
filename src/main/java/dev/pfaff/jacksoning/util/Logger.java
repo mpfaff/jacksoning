@@ -1,7 +1,6 @@
 package dev.pfaff.jacksoning.util;
 
 import com.mojang.datafixers.util.Function3;
-import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import java.util.function.BiFunction;
@@ -11,19 +10,19 @@ import java.util.function.Supplier;
 /**
  * Some utilities to destupify the logging API.
  */
-public final class LogDestupify {
+public final class Logger {
 	/**
-	 * An extra gate to workaround awful {@link Logger} implementations returning {@code true} from
-	 * {@link Logger#isDebugEnabled()}.
+	 * An extra gate to workaround awful {@link org.slf4j.Logger} implementations returning {@code true} from
+	 * {@link org.slf4j.Logger#isDebugEnabled()}.
 	 */
 	private static final boolean DEBUG_ENABLED = false;
 	/**
 	 * @see #DEBUG_ENABLED
 	 */
 	private static final boolean TRACE_ENABLED = false;
-	private final Logger logger;
+	private final org.slf4j.Logger logger;
 
-	public LogDestupify(Logger logger) {
+	public Logger(org.slf4j.Logger logger) {
 		this.logger = logger;
 	}
 

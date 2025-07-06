@@ -9,7 +9,7 @@ import dev.pfaff.jacksoning.packet.UpdateUIPacket;
 import dev.pfaff.jacksoning.player.GamePlayer;
 import dev.pfaff.jacksoning.server.Commands;
 import dev.pfaff.jacksoning.sounds.Sounds;
-import dev.pfaff.jacksoning.util.LogDestupify;
+import dev.pfaff.jacksoning.util.Logger;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -21,7 +21,7 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 public class Jacksoning implements ModInitializer {
-	public static final LogDestupify LOGGER = new LogDestupify(LogUtils.getLogger());
+	public static final Logger LOGGER = new Logger(LogUtils.getLogger());
 
 	@Override
 	public void onInitialize() {

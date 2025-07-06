@@ -2,7 +2,7 @@ package dev.pfaff.jacksoning.client;
 
 import com.mojang.logging.LogUtils;
 import dev.pfaff.jacksoning.packet.UpdateUIPacket;
-import dev.pfaff.jacksoning.util.LogDestupify;
+import dev.pfaff.jacksoning.util.Logger;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -16,7 +16,7 @@ import org.lwjgl.glfw.GLFW;
 import static dev.pfaff.jacksoning.Constants.MOD_ID;
 
 public class JacksoningClient implements ClientModInitializer {
-	public static final LogDestupify LOGGER = new LogDestupify(LogUtils.getLogger());
+	public static final Logger LOGGER = new Logger(LogUtils.getLogger());
 
 	private static final KeyBinding KEY_REFEREE_SCREEN = new KeyBinding("key.jacksoning.referee",
 			InputUtil.Type.KEYSYM,

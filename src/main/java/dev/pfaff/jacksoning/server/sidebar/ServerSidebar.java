@@ -106,7 +106,7 @@ public final class ServerSidebar {
 		}
 
 		if (!buf.isEmpty()) {
-			LOGGER.log(Level.DEBUG, n -> "Sending " + n + " sidebar updates", buf.size());
+			LOGGER.log(Level.TRACE, n -> "Sending " + n + " sidebar updates", buf.size());
 
 			impl.sendUpdates(p, buf);
 		}
