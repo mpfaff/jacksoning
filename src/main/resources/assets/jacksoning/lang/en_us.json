@@ -33,7 +33,5 @@
   "message.jacksoning.shop.not_running": "The game must be active to use the shop.",
   "message.jacksoning.shop.not_spawned": "You must be spawned in to use the shop.",
   "argument.jacksoning.role.invalid": "Invalid role '%s'",
-  "key.jacksoning.referee": "Open Referee Panel",
-  "category.jacksoning": "The Jacksoning",
   "entity.jacksoning.turret.name": "%s Turret"
 }

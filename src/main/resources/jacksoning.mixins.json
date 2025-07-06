@@ -9,7 +9,6 @@
     "AccessorHungerManager",
     "AccessorWorld",
     "MixinCraftingScreenHandler",
-    "MixinDynamicRegistryManagerImmutableImpl",
     "MixinEntity",
     "MixinIntegratedServer",
     "MixinLivingEntity",
