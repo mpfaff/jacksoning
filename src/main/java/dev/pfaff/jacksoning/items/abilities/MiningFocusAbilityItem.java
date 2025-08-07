@@ -12,14 +12,14 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import xyz.nucleoid.packettweaker.PacketContext;
 
-public final class MiningFocusItem extends AbilityItem {
-	public MiningFocusItem(Settings settings) {
+public final class MiningFocusAbilityItem extends AbilityItem {
+	public MiningFocusAbilityItem(Settings settings) {
 		super(settings);
 	}
 
 	@Override
 	public Item getPolymerItem(ItemStack itemStack, PacketContext packetContext) {
-		return Items.FEATHER;
+		return Items.DIAMOND_ORE;
 	}
 
 	@Override

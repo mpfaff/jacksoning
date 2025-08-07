@@ -11,14 +11,14 @@ import xyz.nucleoid.packettweaker.PacketContext;
 
 import static dev.pfaff.jacksoning.sounds.Sounds.BOSS_OF_THE_GYM_COME_ON_LETS_GO;
 
-public final class BeatItItem extends AbilityItem {
-	public BeatItItem(Settings settings) {
+public final class BeatItAbilityItem extends AbilityItem {
+	public BeatItAbilityItem(Settings settings) {
 		super(settings);
 	}
 
 	@Override
 	public Item getPolymerItem(ItemStack itemStack, PacketContext packetContext) {
-		return Items.FEATHER;
+		return Items.HEAVY_CORE;
 	}
 
 	@Override

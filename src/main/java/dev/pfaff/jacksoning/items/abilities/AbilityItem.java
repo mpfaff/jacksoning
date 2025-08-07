@@ -13,6 +13,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -23,7 +24,12 @@ import static dev.pfaff.jacksoning.Constants.MOD_ID;
 import static net.minecraft.component.DataComponentTypes.DAMAGE;
 import static net.minecraft.component.DataComponentTypes.MAX_DAMAGE;
 
+// FIXME: need to prevent these from being dropped
 public abstract class AbilityItem extends Item implements PolymerItem {
+	/**
+	 * If present on the item, when the uses are depleted, the item will be marked for cooldown and the uses will be
+	 * replenished.
+	 */
 	public static final ComponentType<Integer> REPAIR_TIME = Registry.register(
 		Registries.DATA_COMPONENT_TYPE,
 		Identifier.of(MOD_ID, "repair_time"),
@@ -38,19 +44,20 @@ public abstract class AbilityItem extends Item implements PolymerItem {
 		super(settings.maxCount(1));
 		if (!this.getComponents().contains(MAX_DAMAGE)) throw new IllegalArgumentException("Missing required component " + MAX_DAMAGE);
 		if (!this.getComponents().contains(DAMAGE)) throw new IllegalArgumentException("Missing required component " + DAMAGE);
-		if (!this.getComponents().contains(REPAIR_TIME)) throw new IllegalArgumentException("Missing required component " + REPAIR_TIME);
 	}
 
 	/**
-	 * @param target if non-null, the entity that was interacted with
+	 * @param target the target that was interacted with (entity, block, or air)
 	 */
 	protected ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
 		int damage = stack.getDamage() + 1;
 		int maxDamage = stack.getMaxDamage();
 		if (damage >= maxDamage) {
-			int repairTime = stack.getOrDefault(REPAIR_TIME, 0);
-			user.getItemCooldownManager().set(stack, repairTime);
-			damage = 0;
+			Integer repairTime = stack.get(REPAIR_TIME);
+			if (repairTime != null) {
+				user.getItemCooldownManager().set(stack, repairTime);
+				damage = 0;
+			}
 		}
 		stack.setDamage(damage);
 		return ActionResult.SUCCESS;
@@ -59,6 +66,7 @@ public abstract class AbilityItem extends Item implements PolymerItem {
 	@Override
 	public ActionResult use(World world, PlayerEntity user, Hand hand) {
 		if (!world.isClient) {
+			user.sendMessage(Text.of("use"), false);
 			ItemStack stack = user.getStackInHand(hand);
 			return useAbility((ServerWorld) world, (ServerPlayerEntity) user, stack, InteractionTarget.AIR);
 		}
@@ -68,6 +76,7 @@ public abstract class AbilityItem extends Item implements PolymerItem {
 	@Override
 	public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
 		if (!user.getWorld().isClient) {
+			user.sendMessage(Text.of("useOnEntity"), false);
 			return useAbility((ServerWorld) user.getWorld(), (ServerPlayerEntity) user, stack, new InteractionTarget.Entity(entity));
 		}
 		return super.useOnEntity(stack, user, entity, hand);
@@ -75,7 +84,8 @@ public abstract class AbilityItem extends Item implements PolymerItem {
 
 	@Override
 	public ActionResult useOnBlock(ItemUsageContext context) {
-		if (!context.getWorld().isClient) {
+		if (!context.getWorld().isClient && context.getPlayer() != null) {
+			context.getPlayer().sendMessage(Text.of("useOnBlock"), false);
 			return useAbility((ServerWorld) context.getWorld(), (ServerPlayerEntity) context.getPlayer(), context.getStack(), new InteractionTarget.Block(context));
 		}
 		return super.useOnBlock(context);

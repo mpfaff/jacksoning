@@ -11,24 +11,27 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.ActionResult;
 import xyz.nucleoid.packettweaker.PacketContext;
 
-import static dev.pfaff.jacksoning.sounds.Sounds.FEELIN_FEELING_GOOD;
+import static dev.pfaff.jacksoning.sounds.Sounds.OH_MY_GOD_WERE_DOOMED;
 
-public final class FeelinFeelinGoodItem extends AbilityItem {
-	public FeelinFeelinGoodItem(Settings settings) {
+public final class OMGAbililtyItem extends AbilityItem {
+	public OMGAbililtyItem(Settings settings) {
 		super(settings);
 	}
 
 	@Override
 	public Item getPolymerItem(ItemStack itemStack, PacketContext packetContext) {
-		return Items.FEATHER;
+		return Items.SUGAR;
 	}
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
-		world.playSoundFromEntity(null, user, FEELIN_FEELING_GOOD, SoundCategory.MASTER, 1.0f, 1.0f);
-		user.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 40, 5));
-		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 40, 5));
-		//IDEALLY, THIS WOULD ALSO CREATE PARTICLES AROUND THE USER, SPECIFICALLY "/particle minecraft:ominous_spawning ~ ~1 ~ 1 1 1 0.5 100 force" and "/particle minecraft:end_rod ~ ~1 ~ 1 1 1 0.2 100 force"
+		world.playSoundFromEntity(null, user, OH_MY_GOD_WERE_DOOMED, SoundCategory.MASTER, 1.0f, 1.0f);
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 100, 6));
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.MINING_FATIGUE, 400, 5));
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 100, 5));
+		user.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 100, 1));
+		//IDEALLY, THIS WOULD ALSO REMOVE THE USER'S DYES (MERCHANT PACKAGES) AND REPLACE THEM WITH MERCHANT LICENSES
+		//I DON'T KNOW HOW TO DO THAT THOUGH.
 		return super.useAbility(world, user, stack, target);
 	}
 }
