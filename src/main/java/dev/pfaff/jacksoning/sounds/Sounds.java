@@ -79,7 +79,7 @@ public final class Sounds {
 	public static final SoundEvent THRILLER = register("thriller");
 
 	private static SoundEvent register(String name) {
-		return SoundEvent.of(Identifier.of("custom/" + name));
+		return SoundEvent.of(Identifier.of("custom." + name));
 	}
 
 	public static void initialize() {}

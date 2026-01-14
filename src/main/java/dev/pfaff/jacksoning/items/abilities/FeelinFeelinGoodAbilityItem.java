@@ -26,6 +26,7 @@ public final class FeelinFeelinGoodAbilityItem extends AbilityItem {
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
 		world.playSoundFromEntity(null, user, FEELIN_FEELING_GOOD, SoundCategory.MASTER, 1.0f, 1.0f);
+		//world.playSound(null, user.getBlockPos(), FEELIN_FEELING_GOOD,);
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 40, 5));
 		user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 40, 5));
 		//IDEALLY, THIS WOULD ALSO CREATE PARTICLES AROUND THE USER, SPECIFICALLY "/particle minecraft:ominous_spawning ~ ~1 ~ 1 1 1 0.5 100 force" and "/particle minecraft:end_rod ~ ~1 ~ 1 1 1 0.2 100 force"
