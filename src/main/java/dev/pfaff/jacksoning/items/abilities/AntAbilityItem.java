@@ -1,5 +1,7 @@
 package dev.pfaff.jacksoning.items.abilities;
 
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.mob.EndermiteEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -23,6 +25,8 @@ public final class AntAbilityItem extends AbilityItem {
 
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
+		//EndermiteEntity ShrinkEndermite
+		//world.spawnEntity();
 		return ActionResult.FAIL;
 	}
 }

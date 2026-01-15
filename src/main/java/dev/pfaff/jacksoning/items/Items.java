@@ -48,6 +48,16 @@ public final class Items {
 			.component(DAMAGE, 0)
 			.component(REPAIR_TIME, 20 * 60 * 3));
 
+	public static final Item LIFT_YOURSELF = register("lift_yourself", LiftYourselfAbilityItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 20 * 60 * 3));
+
+	public static final Item MAKE_THE_CHANGE = register("make_the_change", MakeTheChangeAbilityItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 1 * 1 * 1));
+
 	public static final Item MINECART = register("minecart", MinecartAbilityItem::new, new Item.Settings()
 			.component(MAX_DAMAGE, 1)
 			.component(DAMAGE, 0)

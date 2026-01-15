@@ -1,11 +1,15 @@
 package dev.pfaff.jacksoning.items.abilities;
 
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.item.ArmorStandItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import xyz.nucleoid.packettweaker.PacketContext;
 
@@ -24,6 +28,9 @@ public final class BeatItAbilityItem extends AbilityItem {
 	@Override
 	public ActionResult useAbility(ServerWorld world, ServerPlayerEntity user, ItemStack stack, InteractionTarget target) {
 		world.playSoundFromEntity(null, user, BOSS_OF_THE_GYM_COME_ON_LETS_GO, SoundCategory.MASTER, 1.0f, 1.0f);
+		ArmorStandEntity customnamepenisman = new ArmorStandEntity(world, user.getX(), user.getY(),user.getZ());
+		customnamepenisman.setCustomName(Text.of("BEAT IT"));
+		world.spawnEntity(customnamepenisman);
         //Waits a certain length of time
 		//setblock -57 -33 27 minecraft:waxed_copper_bulb
 		//IF upgrade "It doesn't matter whos wrong or who's right" is active:/tp @e[x=-50 , y=-33.00, z=37, dx=-13, dy=8, dz=-11, type=!minecraft:player, tag=!Shop] -60 -30 12

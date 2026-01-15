@@ -8,15 +8,12 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.TypeFilter;
 import xyz.nucleoid.packettweaker.PacketContext;
 
-import java.util.Set;
+public final class LiftYourselfAbilityItem extends AbilityItem {
+	private static final String MARKER_TAG = "LiftYourself";
 
-public final class ManInTheMirrorAbilityItem extends AbilityItem {
-	private static final String MARKER_TAG = "ManintheMirror";
-
-	public ManInTheMirrorAbilityItem(Settings settings) {
+	public LiftYourselfAbilityItem(Settings settings) {
 		super(settings);
 	}
 
@@ -39,7 +36,7 @@ public final class ManInTheMirrorAbilityItem extends AbilityItem {
 //			user.teleport(world, markerX, markerY, markerZ, Set.of(), markerYaw, markerPitch, false);
 //		}
 		ArmorStandEntity customnamepenisman = new ArmorStandEntity(world, user.getX(), user.getY(),user.getZ());
-		customnamepenisman.setCustomName(Text.of("Man in the Mirror"));
+		customnamepenisman.setCustomName(Text.of("Stand up and Lift, Yourself"));
 		world.spawnEntity(customnamepenisman);
 		return super.useAbility(world, user, stack, target);
 	}
