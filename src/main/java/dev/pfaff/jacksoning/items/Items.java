@@ -27,6 +27,15 @@ public final class Items {
 			.component(MAX_DAMAGE, 1)
 			.component(DAMAGE, 0)
 			.component(REPAIR_TIME, 20 * 60 * 3));
+	public static final Item No_One_Wants_To_Be_Defeated = register("no_one_wants_to_be_defeated", NoOneWantsToBeDefeatedAbililtyItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 20 * 60 * 3));
+
+	public static final Item They_Will_Kick_You_And_They_Will_Beat_You = register("they_will_kick_you_and_they_will_beat_you", TheyWillKickYouAndTheyWillBeatYouAbilityItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 20 * 60 * 3));
 
 	public static final Item CBT = register("cbt", settings -> new CBTAbilityItem(false, settings), new Item.Settings()
 			.component(MAX_DAMAGE, 1)
@@ -56,7 +65,20 @@ public final class Items {
 	public static final Item MAKE_THE_CHANGE = register("make_the_change", MakeTheChangeAbilityItem::new, new Item.Settings()
 			.component(MAX_DAMAGE, 1)
 			.component(DAMAGE, 0)
-			.component(REPAIR_TIME, 1 * 1 * 1));
+			.component(REPAIR_TIME, 20* 60 * 1));
+
+	public static final Item NEVER_FORGET_WHAT_WE_HAD = register("never_forget_what_we_had", NeverForgetWhatWeHadAbilityItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 20 * 60 * 2));
+	public static final Item YOUNG_AND_INNOCENT = register("young_and_innocent", YoungAndInnocentAbilityItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 20 * 60 * 1));
+	public static final Item ALL_THE_THINGS_THAT_WE_SAID = register("all_the_things_that_we_said", AllTheThingsThatWeSaidAbilityItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 16)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 20 * 10 * 1));
 
 	public static final Item MINECART = register("minecart", MinecartAbilityItem::new, new Item.Settings()
 			.component(MAX_DAMAGE, 1)
