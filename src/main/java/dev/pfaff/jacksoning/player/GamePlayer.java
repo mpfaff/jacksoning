@@ -92,7 +92,7 @@ public final class GamePlayer {
 	public void setRole(PlayerRole role) {
 		LOGGER.log(Level.INFO, () -> "Setting role of " + this + " to " + role);
 		data.roleState = role.newState();
-		applyGameMode(true);
+//		applyGameMode(true);
 	}
 
 	public void setInitRole(PlayerRole role) {
@@ -181,7 +181,7 @@ public final class GamePlayer {
 			tpSpawn();
 		}
 
-		applyGameMode(false);
+//		applyGameMode(false);
 
 		this.nametag.setOverridePos(player.getPos().add(0, 2, 0));
 
@@ -297,11 +297,11 @@ public final class GamePlayer {
 	/**
 	 * @param force whether to force {@link PlayerRole#Referee} back to {@link GameMode#SPECTATOR}.
 	 */
-	public void applyGameMode(boolean force) {
-		if (!force && roleState().role() == PlayerRole.Referee) return;
-		var gameMode = data().isSpawned() && data().role().team != null ? GameMode.SURVIVAL : GameMode.SPECTATOR;
-		asMc().changeGameMode(gameMode);
-	}
+//	public void applyGameMode(boolean force) {
+//		if (!force && roleState().role() == PlayerRole.Referee) return;
+//		var gameMode = data().isSpawned() && data().role().team != null ? GameMode.SURVIVAL : GameMode.SPECTATOR;
+//		asMc().changeGameMode(gameMode);
+//	}
 
 	public void onFatalDamage() {
 		var g = game();
