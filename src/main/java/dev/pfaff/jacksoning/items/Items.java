@@ -95,6 +95,11 @@ public final class Items {
 			.component(DAMAGE, 0)
 			.component(REPAIR_TIME, 20 * 40));
 
+	public static final Item CLOSE_WINGS = register("close_wings", CloseWingsAbilityItem::new, new Item.Settings()
+			.component(MAX_DAMAGE, 1)
+			.component(DAMAGE, 0)
+			.component(REPAIR_TIME, 20 * 1));
+
 	public static final Item RALLY = register("rally", RallyAbilityItem::new, new Item.Settings()
 			.component(MAX_DAMAGE, 1)
 			.component(DAMAGE, 0)
